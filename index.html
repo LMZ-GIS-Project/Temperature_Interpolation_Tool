@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html ng-app="interpolate">
+  <head>
+	<meta charset="utf-8"></meta>
+	<style>
+       		
+		body, html { height: 100%; }
+		.angular-leaflet-map {
+            height: 100%;
+        }
+		  
+		
+    </style>
+ 
+	
+    <script src="app/components/angular/angular.min.js"></script>
+    <script src="app/components/leaflet/dist/leaflet.js"></script>
+	<script src="app/components/Leaflet-IconLayers/src/iconLayers.js"></script>
+	<script src="app/components/angular-leaflet-directive/dist/angular-leaflet-directive.min.js"></script>
+	<script src="app/components/sidebar-v2/js/leaflet-sidebar.js"></script>
+	<script src="app/components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+	<script src="app/components/Leaflet.awesome-markers/dist/leaflet.awesome-markers.js"></script>
+	<script src="app/components/leaflet-draw/dist/leaflet.draw.js"></script>
+
+	
+	<link rel="stylesheet" href="app/components/leaflet/dist/leaflet.css" />
+
+	<link rel="stylesheet" href="app/components/bootstrap/dist/css/bootstrap.min.css"/>
+	<link href="app/components/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="app/components/Leaflet.awesome-markers/dist/leaflet.awesome-markers.css"/>
+	<link rel="stylesheet" href="app/components/Leaflet-IconLayers/src/iconLayers.css"/>
+	<link rel="stylesheet" href="app/components/leaflet-draw/dist/leaflet.draw.css"/>
+	
+	
+	<script src="partials/modules/interpolate.js"></script>
+	<script src="partials/controllers/appController.js"></script>
+		
+	<link rel="stylesheet" href="partials/css/mod_leaflet-sidebar.min.css">
+	<link rel="stylesheet" href="partials/css/charts.css">
+
+	
+	
+  </head>
+  
+  
+<!-- App controller -->
+
+  <body ng-controller="appController">
+   <div id="lmzHeader" class="header">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-11">
+					<a href="http://geo.lmz-bw.de" target="_blank"><img src="app/data/img/lmz-geoportal-logo-transparent.png" border="0" style="pointer-events:auto;"></a>
+				</div>
+				<div class="col-md-1">
+					<button class="btn btn-primary" style="pointer-events:auto; margin-top:10px;" ng-click="login()">Anmelden</button>
+				</div>
+			</div>
+		</div>
+	</div>
+    <leaflet maxbounds="maxbounds" lf-center="center" layers="layers" markers="markers" defaults="defaults" controls="controls" style="z-index:1;" geojson="geojson">
+		 
+	</leaflet>
+       
+
+    
+  </body>
+</html>
