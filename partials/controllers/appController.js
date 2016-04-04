@@ -1,7 +1,7 @@
 app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData', '$timeout', '$window', function($scope, $rootScope, $http, leafletData, $timeout, $window) {
  
 	console.log("appController is OK");
-
+	$scope.editing = false;
 	
 	angular.extend($scope, {
 		layercontrol: {
@@ -44,7 +44,16 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				
 			],
 			draw: {
-				position: 'topright'
+				position: 'bottomright',
+				draw: {
+					polyline: false,
+					polygon: false,
+					rectangle: false,
+					circle: false,
+					marker: {
+						repeatMode: true
+					}
+				}
 			}
 		}
 		
@@ -77,89 +86,114 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		// Instantiate Draw Plugin
 		leafletData.getLayers().then(function(baselayers) {
 			$rootScope.editItems = baselayers.overlays.draw;
+			
+			
+			// Handle creation of temperature markers
+			
 			map.on('draw:created', function (e) {
 				var layer = e.layer;
-				$rootScope.editItems.addLayer(layer);
-				console.log(JSON.stringify(layer.toGeoJSON()));
-			  });
-		});	
-		// BaseLayers for Plugin		
-			pluginLayerObject.push({
-							title: "MapsForFree Relief",
-							layer: new L.tileLayer("http://www.maps-for-free.com/layer/relief/z{z}/row{y}/{z}_{x}-{y}.jpg",
-								{
-									maxZoom: 16,
-									maxNativeZoom: 16,
-									attribution: 'Map data &copy; <a href="http://www.maps-for-free.com">www.maps-for-free.com</a>'
-									}),
-							icon: 'app/data/img/mapsforfree.png'	
-				});
-			
-			pluginLayerObject.push({
-							title: "OpenStreetMap",
-							layer: new L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-							{
-									maxZoom: 16,
-									maxNativeZoom: 16,
-									attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
-									}),
-							icon: 'app/data/img/openstreetmap.png'		
-				});
-			
-			pluginLayerObject.push({
-							title: "ESRI Satellit",
-							layer: new L.tileLayer('http://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 
-							{
-								attribution: '<a href="http://www.esri.com">Esri</a>, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AEX, Getmapping, Aerogrid, IGN, IGP, swisstopo, and the GIS User Community',
-								maxZoom: 16,
-								maxNativeZoom: 16
-							}),
-							icon: 'app/data/img/bingaerial.png'
-				});
-	
-			pluginLayerObject.push({
-							title: 'OpenTopoMap',
-							layer: new L.tileLayer("http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", 
-								{
-									maxZoom: 16,
-									maxNativeZoom: 16,
-									attribution: 'Map data © <a href="http://opentopomap.org">OpenTopoMap</a> contributors'
-									}),
-							icon: 'app/data/img/opentopomap.png'
-				});
-			
-		
-		
-						
-			
 				
-		
-			// create BaseLayercontrol
-			var iconLayersControl = new L.Control.IconLayers(pluginLayerObject, {position: 'bottomright',  maxLayersInRow: 1});
-			iconLayersControl.addTo(map);
-						
-			// remove layercontrol
-			var layerControl = document.getElementsByClassName('leaflet-control-layers')[0];
-			layerControl.parentNode.removeChild(layerControl);
-			
+				
+				
+				
+				
+				
+				
+				$rootScope.editItems.addLayer(layer);
+				
+				// register click
+				layer.on("click", function (e) {
+				
+					$rootScope.$broadcast("startedit", {feature: layer});
 					
-	
-			
-			// create overlayLayer control
-			/*
-			var overLayers = {					
-					"Temperaturen":$rootScope.editItems	
-				};
-			
-			var panelLayers = new L.control.layers(null, overLayers, {position: 'bottomright'});
-			panelLayers.addTo(map);
-			*/
-			
-			// Place zoomcontrol on bottomright position
-			new L.Control.Zoom({ position: 'bottomright' }).addTo(map);
-			
+				});
+				
+				// Show input dialog
+				$rootScope.$broadcast("startedit", {feature: layer});
+				
+				
 			});
+		
+			// BaseLayers for Plugin		
+				pluginLayerObject.push({
+								title: "MapsForFree Relief",
+								layer: new L.tileLayer("http://www.maps-for-free.com/layer/relief/z{z}/row{y}/{z}_{x}-{y}.jpg",
+									{
+										maxZoom: 16,
+										maxNativeZoom: 16,
+										attribution: 'Map data &copy; <a href="http://www.maps-for-free.com">www.maps-for-free.com</a>'
+										}),
+								icon: 'app/data/img/mapsforfree.png'	
+					});
+				
+				pluginLayerObject.push({
+								title: "OpenStreetMap",
+								layer: new L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+								{
+										maxZoom: 16,
+										maxNativeZoom: 16,
+										attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+										}),
+								icon: 'app/data/img/openstreetmap.png'		
+					});
+				
+				pluginLayerObject.push({
+								title: "ESRI Satellit",
+								layer: new L.tileLayer('http://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 
+								{
+									attribution: '<a href="http://www.esri.com">Esri</a>, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AEX, Getmapping, Aerogrid, IGN, IGP, swisstopo, and the GIS User Community',
+									maxZoom: 16,
+									maxNativeZoom: 16
+								}),
+								icon: 'app/data/img/bingaerial.png'
+					});
+		
+				pluginLayerObject.push({
+								title: 'OpenTopoMap',
+								layer: new L.tileLayer("http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", 
+									{
+										maxZoom: 16,
+										maxNativeZoom: 16,
+										attribution: 'Map data © <a href="http://opentopomap.org">OpenTopoMap</a> contributors'
+										}),
+								icon: 'app/data/img/opentopomap.png'
+					});
+				
 			
+			
+							
+				
+					
+			
+				// create BaseLayercontrol
+				var iconLayersControl = new L.Control.IconLayers(pluginLayerObject, {position: 'bottomright',  maxLayersInRow: 1});
+				iconLayersControl.addTo(map);
+							
+				// remove layercontrol
+				var layerControl = document.getElementsByClassName('leaflet-control-layers')[0];
+				layerControl.parentNode.removeChild(layerControl);
+				
+						
+		
+				
+				// create overlayLayer control
+				
+				var overLayers = {					
+						"Temperaturen":$rootScope.editItems	
+					};
+				
+				console.log("editItems", $rootScope.editItems);
+				
+				var panelLayers = new L.control.layers(null, overLayers, {position: 'bottomright'});
+				panelLayers.addTo(map);
+				
+				
+				// Place zoomcontrol on bottomright position
+				new L.Control.Zoom({ position: 'bottomright' }).addTo(map);
+				
+				});
+			
+			});	// map preparation
 			/*
 			// Define zoom dependent smoothFactor
 			map.on("zoomstart", function(event){

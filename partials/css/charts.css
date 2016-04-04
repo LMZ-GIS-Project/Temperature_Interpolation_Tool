@@ -110,6 +110,23 @@ img {
 	
 }
 
+
+.interpolateEditPopup {   
+  position: fixed;
+  top: 12%;
+  right: 0px;
+  text-align: center;           
+  width: 370px;
+  height: auto;
+  padding: 2px;             
+  font: 12px sans-serif;        
+  background: white;   
+  z-index:30000;  
+  border:  1px;
+  border-color: black; 
+}
+
+
  
 .climateChartDescriptionPopup {   
   position: fixed;
