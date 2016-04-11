@@ -1,4 +1,4 @@
-app.controller('editCtrl', [ '$scope', '$rootScope',  function($scope, $rootScope) {
+app.controller('editCtrl', [ '$scope', '$rootScope', '$http',  function($scope, $rootScope, $http) {
  
 	console.log("editController is OK");
 	
@@ -24,9 +24,13 @@ app.controller('editCtrl', [ '$scope', '$rootScope',  function($scope, $rootScop
 		// pick the correct marker and set the temperature
 		
 		$rootScope.editItems._layers[$scope.feature._leaflet_id].temp = $scope.temp;
+		
+		// Saving _latlng object of $scope object as a new variable:
+		latLong = $scope.feature._latlng;
+		
+		$http.get('partials/controllers/database.php?USER=dummy&LAT=' + latLong.lat + '&LONG=' + latLong.lng + '&TEMP=' + $scope.temp).success(function(data,status) {
 			
-		
-		
+		});
 		
 	}
 	

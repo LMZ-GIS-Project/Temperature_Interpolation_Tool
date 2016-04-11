@@ -82,7 +82,11 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 // Perform some post init adjustments
 	
 	leafletData.getMap().then(function(map) {
-			
+		
+		//addressPoints = addressPoints.map(function(p) { return [p[0], p[1]] } );
+		//Heat:	--> multidimensional array needed
+		$rootScope.heat = L.heatLayer([[48.7,8.6]]).addTo(map);
+	
 		// Instantiate Draw Plugin
 		leafletData.getLayers().then(function(baselayers) {
 			$rootScope.editItems = baselayers.overlays.draw;
@@ -100,6 +104,8 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				
 				
 				$rootScope.editItems.addLayer(layer);
+				
+				$rootScope.heat.addLatLng(layer._latlng);
 				
 				// register click
 				layer.on("click", function (e) {
