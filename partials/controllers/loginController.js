@@ -1,5 +1,5 @@
 app.controller('loginCtrl', [ '$scope', '$rootScope', '$http',  function($scope, $rootScope, $http) {
- 
+	//Check code for login. Problem when changing user with the creation of markers? Implement logoff-function?
 	console.log("loginController is OK");
 	
 	$scope.close = function() {
@@ -25,13 +25,20 @@ app.controller('loginCtrl', [ '$scope', '$rootScope', '$http',  function($scope,
 					}
 					$rootScope.username = $scope.user;
 					$rootScope.displayMarkers();
-					alert("Login was successful!");
+					alert("Login was successful!"); //Error?
 				} else {
 					alert("Username does not exists! You need to register!");
+					$scope.user = $rootScope.username;
 				}
 			});
 		
 		
+	}
+	
+	$scope.switchToRegister = function() {
+		$scope.loggingin = false;
+		$scope.registering = true;
+		$rootScope.$broadcast("startregister");
 	}
 	
 	$rootScope.$on("startlogin", function (event) {

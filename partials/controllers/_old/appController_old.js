@@ -2,14 +2,6 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
  
 	console.log("appController is OK");
 	$scope.editing = false;
-	$scope.editable = true;
-	
-	$scope.loggingin = false;
-	$scope.registering = false;
-	
-	$rootScope.username = "";
-	
-	$rootScope.marker_array = [];
 	
 	angular.extend($scope, {
 		layercontrol: {
@@ -103,26 +95,21 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			// Handle creation of temperature markers
 			
 			map.on('draw:created', function (e) {
-				if ($rootScope.username) {
-					var layer = e.layer;
-					console.log("Draw:Created:");
-					console.log(layer);
-					$rootScope.editItems.addLayer(layer);
+				var layer = e.layer;		
 				
-					$rootScope.heat.addLatLng(layer._latlng);
+				$rootScope.editItems.addLayer(layer);
 				
-					// register click
-					layer.on("click", function (e) {
+				$rootScope.heat.addLatLng(layer._latlng);
 				
-						$rootScope.$broadcast("startedit", {feature: layer});
-					
-					});
+				// register click
+				layer.on("click", function (e) {
 				
-					// Show input dialog
 					$rootScope.$broadcast("startedit", {feature: layer});
-				} else {
-					alert("Please login before adding measurements!")
-				}
+					
+				});
+				
+				// Show input dialog
+				$rootScope.$broadcast("startedit", {feature: layer});
 				
 				
 			});
@@ -252,101 +239,37 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	})
 
 */
-
-	//"Simulation" of multiple users: one array with three different usernames, generating a random number between 0 and 2 to randomly "choose" user!
-	/*$scope.usernames = ["dummy", "steve", "helmfried"];
-	var randomNumber = Math.round(Math.random() * (2 - 0)) + 0;
-	$rootScope.username = $scope.usernames[randomNumber];
-	alert($rootScope.username);*/
-	
 	//Create an array to store id of markers that is used to control the display of the markers with the timout function:
 	$rootScope.markers = [];
 	
-	//Definition of a global function, this way it can be called inside the interpolate-module
-	$rootScope.displayMarkers = function() {
+	// Load all the existing entries from the database and display them:
+	$http.get('partials/controllers/getMeasurements.php?USER=dummy').success(function(data, status) {
 		
-		
-		// Load all the existing entries from the database, check if marker is already display, if not then display it:
-		$http.get('partials/controllers/getMeasurements.php?USER=' + $rootScope.username).success(function(data, status) {
-			
-			//Array to store ids of returned markers, used to check if already displayed markers have been deleted in the meantime:
-			var array_marker_ids = [];
-		
-			//Iteration through returned entries:
-			data.features.forEach(function (feature) {
+		data.features.forEach(function (feature) {
+			var marker = L.marker({
+				layer: 'draw',
+				lat: eval(feature.geometry.coordinates[0]),
+				lng: eval(feature.geometry.coordinates[1]),
+				temp: feature.properties.temp,
+				id: feature.properties.id,
+				icon: awesomeMarkerDefault
+			});
+			marker.on("click", function (e) {
 				
-				//Check if marker ID is already in the array of the displayed markers:
-				var checkID = $rootScope.markers.indexOf(feature.properties.id);
-				
-				//If marker is not displayed yet, create new marker and display it:
-				if (checkID == -1) {
-					var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])]);
-					marker.temp =  feature.properties.temp.toString();
+					$rootScope.$broadcast("startedit", {feature: e.layer});
 					
-					//Adding the id of the corresponding entry in the table "measurements" of the sqlite database:
-					marker.id = feature.properties.id;
-					
-					//Adding the name of the user that inserted this entry into the table "measurements" of the sqlite database:
-					marker.user = feature.properties.user;
-
-					marker.on("click", function (e) {
-                        $rootScope.$broadcast("startedit", {feature: marker});	//Marker object is passed as feature since it stores the temperature value!
-                    });
-					
-					//Add marker as layer to map:
-					$rootScope.editItems.addLayer(marker);
-					
-					//Add id of marker entry to array of displayed markers:
-					$rootScope.markers.push(feature.properties.id);
-					
-					//Add marker object to marker array:
-					$rootScope.marker_array.push(marker);
-					
-				}
-				// if marker is already displayed, check if necessary to update the value:
-				else {
-					$rootScope.marker_array.forEach(function(marker_object) {
-		
-						if (marker_object.id == feature.properties.id) {
-								if (marker_object.temp != feature.properties.temp) {
-									marker_object.temp = feature.properties.temp.toString();
-								}
-						}
-						 
-						
-					});
-				}
-				
-				//Add id of returned marker object to array:
-				array_marker_ids.push(feature.properties.id.toString());
-				console.log(feature.properties.id);
-				
 			});
 			
-			//Check if displayed marker has been deleted in the meantime:
-			$rootScope.marker_array.forEach(function(marker_object) {
-		
-				var index_marker = array_marker_ids.indexOf(marker_object.id.toString());
-				if (index_marker == -1) {
-					$rootScope.editItems.removeLayer(marker_object);
-					var index_this_marker = $rootScope.markers.indexOf(marker_object.id);
-					$rootScope.markers.splice(index_this_marker, 1);
-				}
-						
-			});
+			//Add marker as layer to map:
+			$rootScope.editItems.addLayer(marker);
 			
-			
-			
+			//Add id of marker entry to array:
+			$rootScope.markers.push(feature.properties.id);
 		});
-		
-		
-    };	
+    });
 	
-	//$rootScope.displayMarkers();
-	
-	$scope.show = function() {
+	$scope.login = function() {
 		console.log("Clicked Login");
-		$rootScope.$broadcast("startlogin");
 	}
 	
 } ]);
