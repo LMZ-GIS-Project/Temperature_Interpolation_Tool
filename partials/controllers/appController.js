@@ -24,7 +24,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		},
 		defaults: {
 			minZoom: 8,
-			maxZoom: 11,
+			maxZoom: 16,
 			zoomControl: false
 		},
 		events: {},
@@ -85,15 +85,47 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	var DefaultIcon = new L.Icon.Default();
 	
 	var pluginLayerObject = new Array();
+
+
+	//---------------------Farbskala festlegen-------------------------------------------------
+
+	    var gradient = {
+        0.0: "rgba(000,000,255,0)",
+        0.2: "rgba(000,000,255,1)",
+        0.4: "rgba(000,255,255,1)",
+        0.6: "rgba(000,255,000,1)",
+        0.8: "rgba(255,255,000,1)",
+        1.0: "rgba(255,000,000,1)"
+    };
+    var gradientImage = (function () {
+        var canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 256;
+        var ctx = canvas.getContext("2d");
+        var grad = ctx.createLinearGradient(0, 0, 1, 256);
+
+        for (var x in gradient) {
+            grad.addColorStop(x, gradient[x]);
+        }
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 1, 256);
+
+        return ctx.getImageData(0, 0, 1, 256).data;
+    })();
 	
+	//---------------------Ende Farbskala festlegen----------------------------------------------------
 	
 // Perform some post init adjustments
 	
 	leafletData.getMap().then(function(map) {
-		
-		//addressPoints = addressPoints.map(function(p) { return [p[0], p[1]] } );
-		//Heat:	--> multidimensional array needed
-		$rootScope.heat = L.heatLayer([[48.7,8.6]]).addTo(map);
+
+		//----------Heatlayer erhält als Imput die Koordinaten und die Temp als Array------------------
+		//----------Heatlayer erhält die Information zur Gestaltung------------------------------------
+		$rootScope.heat = L.heatLayer(arrayTemp, {gradientImage}).addTo(map);
+
+		console.log("rootScope.heat........................................");
+		console.log($rootScope.heat);
 	
 		// Instantiate Draw Plugin
 		leafletData.getLayers().then(function(baselayers) {
@@ -109,7 +141,9 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					console.log(layer);
 					$rootScope.editItems.addLayer(layer);
 				
-					$rootScope.heat.addLatLng(layer._latlng);
+					//$rootScope.heat.addLatLng(layer._latlng);
+					//console.log($rootScope.heat.addLatLng(layer._latlng));
+				
 				
 					// register click
 					layer.on("click", function (e) {
@@ -280,6 +314,14 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				
 				//If marker is not displayed yet, create new marker and display it:
 				if (checkID == -1) {
+					$scope.interarray = [];
+					inttemp = parseInt(feature.properties.temp);
+					$scope.interarray.push(eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1]),inttemp);
+
+					console.log("interarray......................................");
+					console.log($scope.interarray);
+
+					arrayTemp.push($scope.interarray);
 					var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])]);
 					marker.temp =  feature.properties.temp.toString();
 					
@@ -295,13 +337,19 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					
 					//Add marker as layer to map:
 					$rootScope.editItems.addLayer(marker);
+
+					console.log("HIer folgt ein marker");
+
+					console.log(marker);
 					
 					//Add id of marker entry to array of displayed markers:
 					$rootScope.markers.push(feature.properties.id);
 					
 					//Add marker object to marker array:
 					$rootScope.marker_array.push(marker);
-					
+
+					console.log("marker_array");
+					console.log($rootScope.marker_array);
 				}
 				// if marker is already displayed, check if necessary to update the value:
 				else {
@@ -317,9 +365,10 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					});
 				}
 				
+				
 				//Add id of returned marker object to array:
 				array_marker_ids.push(feature.properties.id.toString());
-				console.log(feature.properties.id);
+				//console.log(feature.properties.id);
 				
 			});
 			
@@ -336,6 +385,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			});
 			
 			
+		leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 			
 		});
 		

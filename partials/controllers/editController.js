@@ -4,20 +4,34 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http',  function($scope, 
 	
 	$scope.editing = false;
 	
-	$scope.temp = 20;
+	//$scope.temp = 20;
 	$scope.feature = {};
+
+	arrayTemp =[];
 	
 	$scope.close = function() {
 		$scope.editing = false;
 		$scope.editable = true;
 	}
 	
+		//TEWST SHIT
+	$scope.blubbtemp = [];
+	$scope.blubb = function(blubbtemp) {
+		$scope.blubbtemp = angular.copy(blubbtemp);
+		console.log("JUHU");
+	};
+
 	
 	$scope.save = function() {
+		console.log(" Frueher ARRAY TEMP");
+		console.log($scope.temp);
 		/*Validation of entered measurements:
 		only values between -30 and +45 are allowed, moreover it is checked if the entered value can be converted to a float value, hence does not contain characters!*/
 		if ($scope.temp >= -30 && $scope.temp <= 45 && isNaN(parseFloat($scope.temp)) == false) {
 			$scope.editing = false;
+
+
+		
 		
 		
 			// Save the temperature within the feature
@@ -29,9 +43,15 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http',  function($scope, 
 			// pick the correct marker and set the temperature
 		
 			$rootScope.editItems._layers[$scope.feature._leaflet_id].temp = $scope.temp;
-		
+
+
 			// Saving _latlng object of $scope object as a new variable:
 			latLong = $scope.feature._latlng;
+
+
+
+			
+			
 		
 			if (typeof $scope.feature.id == "undefined") {
 				//Saving the measurement inside the database by passing the username, coordinates (lat,lon) and the temperature:
@@ -45,6 +65,25 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http',  function($scope, 
 				
 					//Add marker object to marker array:
 					$rootScope.marker_array.push($scope.feature);
+
+					//--------Speichern der Werte LAT LONG und TEMP in einem Array-------------------------
+
+					$scope.interarray = [];
+					inttemp = parseInt($scope.temp);
+					$scope.interarray.push(latLong["lat"], latLong["lng"],inttemp);
+
+					console.log("interarray......................................");
+					console.log($scope.interarray);
+
+					arrayTemp.push($scope.interarray);
+					console.log("ArrayTEMP.........................................");
+					console.log(arrayTemp);
+
+					//$rootScope.heat($rootScope.arrayTemp).addTo(map);
+					//console.log("Heatmap...........................................");
+					//console.log($rootScope.heat);
+
+					//-------------------------------------------------------------------------------
 				});
 			
 			} else {
