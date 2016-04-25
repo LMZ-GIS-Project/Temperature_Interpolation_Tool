@@ -34,7 +34,6 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
     },
 
     redraw: function () {
-		
         if (this._heat && !this._frame && !this._map._animating) {
             this._frame = L.Util.requestAnimFrame(this._redraw, this);
         }
@@ -155,8 +154,8 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
                     grid[y][x] = [p.x, p.y, k];
 
                 } else {
-                    cell[0] = (cell[0] * cell[2] + p.x * k + 20)  / (cell[2] + k); // x
-                    cell[1] = (cell[1] * cell[2] + p.y * k + 20 ) / (cell[2] + k); // y
+                    cell[0] = (cell[0] * cell[2] + p.x * k) / (cell[2] + k); // x
+                    cell[1] = (cell[1] * cell[2] + p.y * k) / (cell[2] + k); // y
                     cell[2] += k; // cumulated intensity value
                 }
             }
@@ -177,7 +176,7 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
             }
         }
         // console.timeEnd('process');
-		console.log("Heatmap Data", data);
+
         // console.time('draw ' + data.length);
         this._heat.data(data).draw(this.options.minOpacity);
         // console.timeEnd('draw ' + data.length);
@@ -186,7 +185,6 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
     },
 
     _animateZoom: function (e) {
-		
         var scale = this._map.getZoomScale(e.zoom),
             offset = this._map._getCenterOffset(e.center)._multiplyBy(-scale).subtract(this._map._getMapPanePos());
 

@@ -385,7 +385,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			});
 			
 			
-		leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+			leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 			
 		});
 		
