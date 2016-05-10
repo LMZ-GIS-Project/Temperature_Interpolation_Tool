@@ -8,7 +8,7 @@
 	
 	//In order to not display the marker twice, we have to get the ID and return it to the client, after that the ID is added to the array of all displayed markers:
 	//Check if measurement already exists, hence, temp only needs to be updated:
-	$sql = "SELECT COUNT(*) as count FROM 'users' WHERE USER = '".$user."'";
+	$sql = "SELECT COUNT(*) as count FROM 'users' WHERE username = '".$user."'";
 	
 	//save query results:
 	$result = $db->query($sql);
