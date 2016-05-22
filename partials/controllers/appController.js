@@ -529,18 +529,27 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	
 	//necessary functions:
 	$scope.drawingOnCanvas = function(canvasOverlay, params) {
+		var draw_it = 0;//boolean if set to 1, the canvas is drawn
+
 		//kriging variogram calculation
-			//data
-			var t = [21, 30, 15, 15];
-	        var x = [49.005, 49.015, 49.005, 49.015];
-	        var y = [8.335, 8.355, 8.355, 8.335];
+		//data
+		var t = [21, 30, 15, 15];
+        var x = [49.005, 49.015, 49.005, 49.015];
+        var y = [8.335, 8.355, 8.355, 8.335];
 
-	        //modelsetup
-	        /*var model = "exponential";
-		    var sigma2 = 0.1, alpha = 1;
-		    var variogram = kriging.train(t, x, y, model, sigma2, alpha);*/
-
-        var ctx = params.canvas.getContext('2d');
+        //modelsetup
+        var model = "exponential";
+	    var sigma2 = 0.1, alpha = 1;
+	    var variogram = kriging.train(t, x, y, model, sigma2, alpha);
+		
+		//min max values of the drawn rectangular
+		var x_min = 8.335,//lng
+			y_min = 49.005,//lat
+			x_max = 8.355,//lng
+			y_max = 49.015;//lat
+        
+        var ctx = params.canvas.getContext('2d');//create canvas
+      	ctx.globalAlpha = 1;//set the opacity for the whole canvas
         console.log("width of the canvas: " + params.canvas.width + " height of the canvas: " + params.canvas.height);
         ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
     //    ctx.fillStyle = "rgba(255,116,0, 0.2)";
@@ -553,67 +562,98 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 
     	var x_factor = x_len_deg / x_len_px;//degree of one pixel in x
     	var y_factor = y_len_deg / y_len_px;//degree of one pixel in y
-    	
 
-    	//min max values of the drawn rectangular
-		var x_min = 7.335,
-			y_min = 48.005,
-			x_max = 8.355,
-			y_max = 49.015;
-
+    	//calc offset from left upper corner // using right = x direction // using down = y direction <- down!!!!! NOT UP!
 		var x_offset = (x_min - params.bounds._southWest.lng) / x_factor;//in pixel
-		var y_offset = (y_min - params.bounds._northEast.lat) / y_factor;//in pixel
-		x_offset = Math.abs(x_offset);//avoid negative offsets
-		y_offset = Math.abs(y_offset);//avoid negative offsets
+		var y_offset = (params.bounds._northEast.lat - y_max) / y_factor;//in pixel
+	
+		var x_offset_deg = 0;//offset in degree
+		var y_offset_deg = 0;//offset in degree
 		
-		console.log("potatoe " + $rootScope.map.getZoom());
 
-		x_factor = x_factor * $rootScope.map.getZoom();
-    	y_factor = y_factor * $rootScope.map.getZoom();
-		
-		var can_x = (x_max - x_min) / x_factor;//rectangular size in pixel
-		var can_y = (y_max - y_min) / y_factor;//rectangular size in pixel
+		//exception handling if some parts are outside the canvas
+		if (x_min < params.bounds._northEast.lng && x_max > params.bounds._southWest.lng){
+			draw_it = 1;
+//			console.log("x axis is in range!");
+			if (x_min < params.bounds._southWest.lng){
+//				console.log("x_min is corrected to left edge");
+				x_offset = 0;
+				x_min = params.bounds._southWest.lng;
+			}
+			if (x_max > params.bounds._northEast.lng){
+//				console.log("x_max is corrected to right edge");
+				x_max = params.bounds._northEast.lng;
+			}
+		}
+		else {
+//			console.log("x axis is OUT of range -> rectangular is not drawn");
+			draw_it = 0;
+		}
+		if (y_max > params.bounds._southWest.lat && y_min < params.bounds._northEast.lat){
+			draw_it = 1;
+//			console.log("y axis is in range!");
+			if (y_max > params.bounds._northEast.lat){
+//				console.log("y_max is corrected to top edge");
+				y_offset = 0;
+				y_max = params.bounds._northEast.lat;
+			}
+			if (y_min < params.bounds._southWest.lat){
+//				console.log("y_min is corrected to lower edge");
+				y_min = params.bounds._southWest.lat;
+			}
+		}
+		else {
+//			console.log("y axis is OUT of range -> rectangular is not drawn");
+			draw_it = 0;
+		}
 
-		can_x = can_x + x_offset;//add the offset of the canvas
-		can_y = can_y + y_offset;//add the offset of the canvas
+		if (draw_it == 1){
+//			console.log("the rectangular is drawn!");
+			x_offset_deg = params.bounds._southWest.lng + x_offset * x_factor;
+			y_offset_deg = params.bounds._northEast.lat - y_offset * y_factor;
+//			console.log("the offset in degree for x is: ", x_offset_deg, " in y: ", y_offset_deg);
 
-//		var cellsX = (aWidth/idwcells.width)|0;
-		var test = (x_min >= params.bounds._southWest.lng ) &&
-			(x_max <= params.bounds._northEast.lng ) &&
-			(y_min >= params.bounds._southWest.lat ) &&
-			(y_max <= params.bounds._northEast.lat );
+			var test = (x_min >= params.bounds._southWest.lng ) &&
+				(x_max <= params.bounds._northEast.lng ) &&
+				(y_min >= params.bounds._southWest.lat ) &&
+				(y_max <= params.bounds._northEast.lat );
 
-		console.log(params.bounds, x_min,y_min, x_max, y_max, test);
+//			console.log("the current bounds and x_min, y_min, x_max, y_max", params.bounds, x_min, y_min, x_max, y_max, test);
 
-		if (
-			(x_min >= params.bounds._southWest.lng ) &&
-			(x_max <= params.bounds._northEast.lng ) &&
-			(y_min >= params.bounds._southWest.lat ) &&
-			(y_max <= params.bounds._northEast.lat ) ) {
+			var rec_x = (x_max - x_min);//rectangular size in degree
+			var rec_y = (y_max - y_min);//rectangular size in degree
 
-	//	if(params.bounds.intersects([[x_min, y_min], [x_max, y_max]])){
+//			console.log("the rec_x size: ", rec_x, "   and the rec_y size: ", rec_y);
+			
+			rec_x = rec_x / x_factor;//converting rectuglar size to pixel
+			rec_y = rec_y / y_factor;//converting  rectuglar size to pixel
 
-			for (var i = x_offset; i < can_x; i += $rootScope.map.getZoom()) {
-			    for ( var j = y_offset; j < can_y; j += $rootScope.map.getZoom()) {
+//			console.log("rec_size converted to pixels: x: ", rec_x, "   y: ", rec_y);
+
+			rec_x = rec_x + x_offset;//add the offset of the canvas
+			rec_y = rec_y + y_offset;//add the offset of the canvas
+
+//			console.log("adding the offset in x: ", x_offset, " resulting in x: ", rec_x, " and the y offset ", y_offset, " resulting in y: ", rec_y);
+
+			for (var i = x_offset; i < rec_x; i += 10){
+			    for ( var j = y_offset; j < rec_y; j += 10) {
 			    	//calculate the current position in lat / lng
-			    	var x_offset_deg = x_offset * x_factor;//offset in degree == (x_min - params.bounds._southWest.lng)
-			    	var y_offset_deg = y_offset * y_factor;//offset in degree == (x_min - params.bounds._southWest.lng)
 			    	var lng =  x_offset_deg + i * x_factor;
-			    	var lat = y_offset_deg + j * y_factor;
+			    	var lat = y_offset_deg - j * y_factor;
 			    	console.log("lat: " + lat + " lon: " + lng);
 
-			    	//var value = predict_point(lng, lat, variogram);//->store the value at position in value
-			    	//console.log(value);
+			    	var value = predict_point(lng, lat, variogram);//->store the value at position in value
+			    	console.log("calculated kriging value: ", value);
 
 			    	var randomm = parseInt(Math.random() * 255);
 
-			    	var color = rgbToHex(randomm, randomm, randomm);//convert an rgb value to a hex value
+			    	var color = rgbToHex(randomm, randomm, 0);//convert an rgb value to a hex value
 				    ctx.fillStyle=color;//set the color of the rectangular
-					console.log(i,j);
+//					console.log(i,j);
 					ctx.fillRect(i,j,10,10);//draw a rectangular on canvas with height and width 1 pixel
 				}
 			}
-		}
+		}//draw_it
     };
 
     function componentToHex(c) {
@@ -626,7 +666,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	}
 
 	//predict value with kriging for this specific point (x, y); variogram is calculated on the top
-	/*function predict_point(x, y, variogram) {
+	function predict_point(x, y, variogram) {
 		var i, k = Array(variogram.n);
 		for(i=0;i<variogram.n;i++)
 		    k[i] = variogram.model(Math.pow(Math.pow(x-variogram.x[i], 2)+
@@ -634,9 +674,9 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				   variogram.nugget, variogram.range, 
 				   variogram.sill, variogram.A);
 		return matrix_multiply(k, variogram.M, 1, variogram.n, 1)[0];
-	};*/
+	};
 
-	/*function matrix_multiply(X, Y, n, m, p) {
+	function matrix_multiply(X, Y, n, m, p) {
 		var i, j, k, Z = Array(n*p);
 		for(i=0;i<n;i++) {
 		    for(j=0;j<p;j++) {
@@ -646,7 +686,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		    }
 		}
 		return Z;
-	}*/
+	}
 	
 	//Canvas:
 	leafletData.getMap().then(function(map) {
