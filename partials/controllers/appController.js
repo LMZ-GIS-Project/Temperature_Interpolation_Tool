@@ -539,8 +539,13 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 
         //modelsetup
         var model = "exponential";
-	    var sigma2 = 0.1, alpha = 1;
+	    var sigma2 = 1, alpha = 1;
 	    var variogram = kriging.train(t, x, y, model, sigma2, alpha);
+	    console.log("the variogram object: ", variogram);
+
+	    //color range setup
+	    var color_model = (2/3)/(Math.max.apply(null, t) - Math.min.apply(null, t));
+	    var color_offset = Math.min.apply(null, t);
 		
 		//min max values of the drawn rectangular
 		var x_min = 8.335,//lng
@@ -645,9 +650,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			    	var value = predict_point(lng, lat, variogram);//->store the value at position in value
 			    	console.log("calculated kriging value: ", value);
 
-			    	var randomm = parseInt(Math.random() * 255);
-
-			    	var color = rgbToHex(randomm, randomm, 0);//convert an rgb value to a hex value
+			    	var color = hslToRgb(((value - color_offset) * color_model), 1, 0.5);//map the value to a color range
 				    ctx.fillStyle=color;//set the color of the rectangular
 //					console.log(i,j);
 					ctx.fillRect(i,j,10,10);//draw a rectangular on canvas with height and width 1 pixel
@@ -663,6 +666,31 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 
 	function rgbToHex(r, g, b) {
 	    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+	}
+
+	function hslToRgb(h, s, l){
+	    var r, g, b;
+
+	    if(s == 0){
+	        r = g = b = l; // achromatic
+	    }else{
+	        var hue2rgb = function hue2rgb(p, q, t){
+	            if(t < 0) t += 1;
+	            if(t > 1) t -= 1;
+	            if(t < 1/6) return p + (q - p) * 6 * t;
+	            if(t < 1/2) return q;
+	            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+	            return p;
+	        }
+
+	        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+	        var p = 2 * l - q;
+	        r = hue2rgb(p, q, h + 1/3);
+	        g = hue2rgb(p, q, h);
+	        b = hue2rgb(p, q, h - 1/3);
+	    }
+
+	    return rgbToHex(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255));
 	}
 
 	//predict value with kriging for this specific point (x, y); variogram is calculated on the top
