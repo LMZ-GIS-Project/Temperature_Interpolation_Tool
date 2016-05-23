@@ -2,21 +2,16 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
  
 	console.log("appController is OK");
 	
-	//Boolean control variables:
+	$scope.editable = true;
+	$scope.teacher = false;
+	$scope.inclass = false;
 	
-	//to control displaying of modal windows:
-	$scope.editable = true;		//save- / delete-button in edit modal window
-	$scope.teacher = false;		//register button in login modal window
-	$scope.inclass = false;		//teacher modal window for defintion of class
+	//$scope.display_heatcanvas = false;
 	
-	$scope.editing = false;		//edit modal window
-	$scope.loggingin = false;	//login modal window
-	$scope.registering = false;	//register modal window
-	$scope.gettingclass = false;	//class modal window
-	$scope.modalalert = false;		//alert modal window
-	
-	$rootScope.modaltitel = "";
-	$rootScope.modalmessage = "";
+	$scope.editing = false;
+	$scope.loggingin = false;
+	$scope.registering = false;
+	$scope.gettingclass = false;
 	
 	$rootScope.username = "";			//username
 	$rootScope.teachername = "";
@@ -25,27 +20,16 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	$rootScope.classname = "";			//needed to determine the markers to be displayed for a teacher
 	$rootScope.school = "";				//needed to determine the markers to be displayed for a teacher
 	
-	//Control variable for heatmap:
-	$rootScope.heatmap_visible = false;
+	$rootScope.marker_array = [];
 	
-	//Variable for "geolocate" button:
-	$scope.locateButton;
+	$rootScope.color_array = ['black','blue','yellow','red','brown','cyan','orange','blue-dark','purple','green-dark'];
 	
-	
-	//Marker variables and functions:
-	
-	$rootScope.marker_array = [];						//all markers displayed on the map are stored inside this array
-	$rootScope.marker_cluster = new L.featureGroup();	//again all markers are stored inside used to get bounds for markers in HeatCanvas
-	
-	$rootScope.color_array = ['black','blue','yellow','red','green-dark','cyan','orange','blue-dark','purple','brown'];	//Array for color of markers, 0 = teacher, 1-9 = pupils / groups
-	
-	//Default marker icon:
 	$rootScope.awesomeMarkerIconDefault = L.ExtraMarkers.icon({
 									icon: 'fa-number',
 									number: parseInt(0),
 									markerColor: 'blue'
 	});
-	//console.log("EditItems: ", $rootScope.editItems.getBounds());
+	console.log("Marker object: ", $rootScope.awesomeMarkerIconDefault);
 	
 	/*var awesomeMarkerIconUpdated =  L.ExtraMarkers.icon({
 					icon: 'fa-number',
@@ -117,128 +101,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		} 
 		
 	}
-	
-	//Function to create a marker object, which is also returned, at the passed location with the correct icon depending on the marker type and its creator:
-	$scope.createMarker = function(lat, lon, temperature, type, username) {
-		thisIcon = $rootScope.getMarkerIcon(temperature, type, $rootScope.getGroupnumber(username));
-		var marker = L.marker([eval(lat), eval(lon)], {icon: thisIcon});
-		
-		marker.on("click", function (e) {
-                        $rootScope.$broadcast("startedit", {feature: marker});
-        });
-		
-		return marker;
-	}
-	
-	//Function to display "alert" in a modal window:
-	$rootScope.showAlert = function(titel,message) {
-		$rootScope.modaltitel = titel;
-		$rootScope.modalmessage = message;
-		// Show alert modal window:
-		$rootScope.$broadcast("startalert");
-	}
-	
-	//Function to determine a user's geolocation:
-	/*$scope.showResult = function () {
-            return $scope.error == "";
-    }
- 
-    $scope.getCoordinates = function (position) {
-            $scope.lat = position.coords.latitude;
-            $scope.lng = position.coords.longitude;
-			console.log("Lat: ", $scope.lat, ", Lon: ", $scope.lng);
-            $scope.accuracy = position.coords.accuracy;
-            //$scope.$apply();
- 
-            //var latlng = new google.maps.LatLng($scope.lat, $scope.lng);
-            //$scope.model.myMap.setCenter(latlng);
-            //$scope.myMarkers.push(new google.maps.Marker({ map: $scope.model.myMap, position: latlng }));
-			
-			//Creation of the marker:
-			var marker = $scope.createMarker($scope.lat,$scope.lng,parseInt(0),"default",$rootScope.username);
-			
-			//If marker creation was successful show input dialog:
-			if (marker) {
-				//Broadcast event drawstop to stop drawing mode:
-				$rootScope.$broadcast("draw:drawstop");
 				
-				//Add marker to editItems:
-				$rootScope.editItems.addLayer(marker);
-				
-				// Show input dialog
-				$rootScope.$broadcast("startedit", {feature: marker});
-			}
-    }*/
- 
-    /*$scope.showError = function (error) {
-        switch (error.code) {
-			case error.PERMISSION_DENIED:
-				$scope.error = "User denied the request for Geolocation."
-                break;
-            case error.POSITION_UNAVAILABLE:
-				$scope.error = "Location information is unavailable."
-                break;
-            case error.TIMEOUT:
-				$scope.error = "The request to get user location timed out."
-                break;
-            case error.UNKNOWN_ERROR:
-                $scope.error = "An unknown error occurred."
-                break;
-        }
-        $scope.$apply();
-    }*/
-	
-		
-	function onLocationFound(e) {
-		
-		/*var radius = e.accuracy / 2;
-		L.marker(e.latlng).addTo(map)
-			.bindPopup("You are within " + radius + " meters from this point").openPopup();
-		L.circle(e.latlng, radius).addTo(map);*/
-		
-		//Coordinates of location for marker:
-		var latLon = e.latlng;
-		
-		//Creation of the marker:
-		var marker = $scope.createMarker(latLon.lat,latLon.lng,parseInt(0),"default",$rootScope.username);
-			
-		//If marker creation was successful show input dialog:
-		if (marker) {
-				
-			//Add marker to editItems:
-			$rootScope.editItems.addLayer(marker);
-				
-			// Show input dialog
-			$rootScope.$broadcast("startedit", {feature: marker});
-		}
-		
-		$scope.locateButton.state('un_loaded');
-	}
-
-	function onLocationError(e) {
-		alert(e.message);
-		$scope.locateButton.state('error');
-	}
- 
-    $scope.getLocation = function () {
-		/*if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition($scope.getCoordinates, $scope.showError);
-			control.state('un_loaded');
-        }
-        else {
-			$scope.error = "Geolocation is not supported by this browser.";
-			alert("Geolocation is not supported by this browser.");
-			control.state('error');
-        }*/
-		leafletData.getMap().then(function(map) {
-			map.locate({setView: true, maxZoom: 11});
-		});
-    }
- 
-     //$scope.getLocation();
-	//end of geolocation part
-	
-	//Setup of map object:
 	angular.extend($scope, {
 		layercontrol: {
                     icons: {
@@ -269,6 +132,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					name: "Temperaturen",
 					type: "group",
 					visible: true
+					
 				}
 			}
 		},
@@ -291,7 +155,8 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					}
 				}
 			}
-		}		
+		}
+		
 	});
 	
 	var pluginLayerObject = new Array();
@@ -330,85 +195,6 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 // Perform some post init adjustments
 	
 	leafletData.getMap().then(function(map) {
-		console.log("Map object: ",map);
-		$scope.locateButton = L.easyButton({
-			states:[{
-				stateName: 'un_loaded',
-				icon: 'fa-location-arrow',
-				title: 'Benutzer orten!',
-				onClick: function(control) {
-					if ($rootScope.username != "") {
-						control.state("loading");
-						/*control._map.on('locationfound', function(e){
-							this.setView(e.latlng, 17);
-							control.state('loaded');
-						});
-						control._map.on('locationerror', function(){
-							control.state('error');
-						});
-						control._map.locate()*/
-						$scope.getLocation();
-					} else {
-						//alert("Bitte loggen Sie sich ein!");
-						$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
-					}
-				}
-			}, {
-				stateName: 'loading',
-				icon: 'fa-spinner fa-spin',
-				title: 'Am Verorten!'
-			}, {
-				stateName: 'error',
-				icon: 'fa-frown-o',
-				title: 'Ort nicht gefunden!'
-			}/*, {
-				stateName: 'unloaded',
-				icon: 'fa-location-arrow',
-				title: 'Benutzer orten!',
-				onClick: function() {
-					if ($rootScope.username != "") {
-						$scope.getLocation()
-					} else {
-						alert("Bitte loggen Sie sich ein!");
-					}
-				}
-			}*/]
-		});
-		$scope.locateButton.addTo(map);
-		
-		console.log("Test control: ", $scope.locateButton);
-		
-		//Geolocation using leaflet map object:
-		map.on('locationfound', onLocationFound);
-		map.on('locationerror', onLocationError);
-		
-		//Save button for export of heatmap:
-		$scope.saveButton = L.easyButton({
-			states:[{
-				stateName: 'un_saved',
-				icon: 'fa-floppy-o',
-				title: 'Heatmap speichern!',
-				onClick: function(control) {
-					if ($rootScope.username != "" && $rootScope.heatmap_visible == true) {
-						control.state("saving");
-						var date = new Date();
-						$rootScope.heatmap.save($rootScope.school,$rootScope.classname,date,control);
-					} else {
-						//alert("Bitte loggen Sie sich ein!");
-						$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
-					}
-				}
-			}, {
-				stateName: 'saving',
-				icon: 'fa-spinner fa-spin',
-				title: 'Am Speichern!'
-			}, {
-				stateName: 'error',
-				icon: 'fa-frown-o',
-				title: 'Fehler beim Speichern!'
-			}]
-		});
-		$scope.saveButton.addTo(map);
 		
 		/*HeatLayer:
 		/*addressPoints = addressPoints.map(function(p) { return [p[0], p[1]] } );
@@ -418,7 +204,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		//----------Heatlayer erhält als Imput die Koordinaten und die Temp als Array------------------
 		//----------Heatlayer erhält die Information zur Gestaltung------------------------------------
 		//$rootScope.heat = L.heatLayer(arrayTemp, {gradientImage}).addTo(map);
-		
+	
 		// Instantiate Draw Plugin
 		leafletData.getLayers().then(function(baselayers) {
 			$rootScope.editItems = baselayers.overlays.draw;
@@ -446,47 +232,11 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					// Show input dialog
 					$rootScope.$broadcast("startedit", {feature: layer});
 				} else {
-					//alert("Please login before adding measurements!")
-					$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
+					alert("Please login before adding measurements!")
 				}
 				
 				
 			});
-			
-			/*Event when user clicks on marker creation button called "drawstart",
-			instead of letting the user create a marker, the geolocation is caught and
-			the marker is created automatically:*/
-			/*map.on('draw:drawstart', function (e) {
-				console.log("Event when draw is started:", e);
-				if ($rootScope.username != "") {
-					$scope.getLocation();
-					//console.log("Event object: ",e.target);
-					
-					leafletData.getMap().then(function(map) {
-						map.fire('draw:drawstop', {layerType: e.layerType});
-						//e.target._handlers._enabled = false;
-						//e.target.fire('disabled', {handler: e.target._handlers});
-						//this.fire('disabled', { handler: this.type });
-					});
-				} else {
-					console.log("in else of drawstart!");
-					leafletData.getMap().then(function(map) {
-						map.removeLayer(e);
-						map.fire('draw:drawstop', {layerType: e.layerType});
-					});
-				}
-			});*/
-			
-			//Event when marker has been drawn and edit is finished:
-			/*map.on('draw:drawstop', function (e) {
-				//alert("Drawstop!");
-				//console.log("Event stop: ", e);
-				leafletData.getMap().then(function(map) {
-					leafletData.getLayers().then(function(baselayers) {
-						console.log("Overlay draw: ",baselayers.overlays.draw);
-					});
-				});
-			});*/
 		
 			// BaseLayers for Plugin		
 				pluginLayerObject.push({
@@ -566,8 +316,6 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				new L.Control.Zoom({ position: 'bottomright' }).addTo(map);
 				
 				});
-				
-				$rootScope.map = map;
 			
 	});	// map preparation
 		/*
@@ -616,7 +364,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 
 */
 	//Create an array to store the measurement data for interpolation:
-	$rootScope.measurements = [];
+	//$rootScope.measurements = [];
 	/*$rootScope.measurements = {
 		max: 45,
 		data: []
@@ -633,11 +381,10 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		
 		//"Reset" previusly updated / created markers -> change icon color to default, done by iterating throuhg array with marker objects:
 		$rootScope.updateMarkers.forEach(function (marker) {
-			thisIcon = $rootScope.getMarkerIcon(marker.temp, "default",marker.group);
+			thisIcon = $rootScope.getMarkerIcon(marker.temp, "default");
 			marker.setIcon(thisIcon);
+			$rootScope.updateMarkers.splice(marker, 1);
 		});
-		//After updating, the array is reset:
-		$rootScope.updateMarkers = [];
 		
 		// Load all the existing entries from the database, check if marker is already displayed, if not then display it:
 		$http.get('partials/controllers/getMeasurements.php?USER=' + $rootScope.username).success(function(data, status) {
@@ -661,23 +408,19 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					
 					if ($rootScope.display_markers == false) {
 						if (feature.properties.user == $rootScope.username) {
-							//thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "default", $rootScope.getGroupnumber(feature.properties.user));
-							//var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])], {icon: thisIcon});
-							var marker = $scope.createMarker(feature.geometry.coordinates[0],feature.geometry.coordinates[1],feature.properties.temp,"default",$rootScope.username);
+							thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "default", $rootScope.getGroupnumber(feature.properties.user));
+							var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])], {icon: thisIcon});
 						} else {
-							//thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "default", $rootScope.getGroupnumber(feature.properties.user));
-							//var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])], {icon: thisIcon});
-							var marker = $scope.createMarker(feature.geometry.coordinates[0],feature.geometry.coordinates[1],feature.properties.temp,"default",feature.properties.user);
+							thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "default", $rootScope.getGroupnumber(feature.properties.user));
+							var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])], {icon: thisIcon});
 						}	
 					} else {
 						if (feature.properties.user == $rootScope.username) {
-							//thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "default", $rootScope.getGroupnumber(feature.properties.user));
-							//var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])], {icon: thisIcon});
-							var marker = $scope.createMarker(feature.geometry.coordinates[0],feature.geometry.coordinates[1],feature.properties.temp,"default",feature.properties.user);
+							thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "default", $rootScope.getGroupnumber(feature.properties.user));
+							var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])], {icon: thisIcon});
 						} else {
-							//thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "updating", $rootScope.getGroupnumber(feature.properties.user));
-							//var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])], {icon: thisIcon});
-							var marker = $scope.createMarker(feature.geometry.coordinates[0],feature.geometry.coordinates[1],feature.properties.temp,"updating",feature.properties.user);
+							thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "updating", $rootScope.getGroupnumber(feature.properties.user));
+							var marker = L.marker([eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1])], {icon: thisIcon});
 							marker.options.clickable = false;
 							setTimeout(function() {
 								marker.options.clickable = true;
@@ -696,14 +439,15 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					
 					//Adding the name of the user that inserted this entry into the table "measurements" of the sqlite database:
 					marker.user = feature.properties.user;
-					
 					//Adding the groupnumber as property to determine the color of the markers:
-					marker.group = $rootScope.getGroupnumber(feature.properties.user);
+					marker.group = groupnumber;
+					console.log(marker.group);
 					
 					
-					/*marker.on("click", function (e) {
-                        $rootScope.$broadcast("startedit", {feature: marker});	//Marker object is passed as feature since it stores the temperature value!
-                    });*/
+					marker.on("click", function (e) {
+                        $rootScope.$broadcast("startedit", {feature: marker /*, arrayID: $rootScope.markers, arrayMarker: $rootScope.marker_array*/});	//Marker object is passed as feature since it stores the temperature value!
+                    });
+					
 					//marker.setIcon(awesomeMarkerIcon);
 					
 					//Add marker as layer to map:
@@ -716,15 +460,9 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					$rootScope.marker_array.push(marker);
 					
 					//Adding measurement data for interpolation:
-					var this_measurement = new Array(eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1]), parseFloat(feature.properties.temp));
-					$rootScope.measurements.push(this_measurement);
-					
-					//Add marker to marker_cluster object, used to get bounds from markers:
-					$rootScope.marker_cluster.addLayer(marker);
-					
-					
-					
-					//$rootScope.measurements.data.push({lat: eval(feature.geometry.coordinates[0]), lng:eval(feature.geometry.coordinates[1]), temp: parseFloat(feature.properties.temp)});
+					//var this_measurement = new Array(eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1]), parseFloat(feature.properties.temp));
+					//$rootScope.measurements.push(this_measurement);
+					 //$rootScope.measurements.data.push({lat: eval(feature.geometry.coordinates[0]), lng:eval(feature.geometry.coordinates[1]), temp: parseFloat(feature.properties.temp)});
 				}
 				// if marker is already displayed, check if necessary to update the value:
 				else {
@@ -757,9 +495,9 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			
 			//Check if displayed marker has been deleted in the meantime:
 			$rootScope.markers.forEach(function(marker_id) {
-				//console.log(marker_id);
+				console.log(marker_id);
 				var index_marker = array_marker_ids.indexOf(parseInt(marker_id));
-				//console.log(index_marker);
+				console.log(index_marker);
 				if (index_marker == -1) {
 					var index_deleted_marker = $rootScope.markers.indexOf(parseInt(marker_id));
 					$rootScope.markers.splice(index_deleted_marker, 1);
@@ -774,13 +512,8 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			//Leaflet.Heat:
 			//leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 			
-			//Call heatmap measurement function to add data to heatmap for creation of heatmap:
-			if ($rootScope.display_markers == false || $rootScope.updateMarkers.length > 0) {
-				$rootScope.updateHeatmapData($rootScope.measurements);
-			}
-			
 			//after first use -> set $scope.display_markers to true:
-			$rootScope.display_markers = true;
+			$rootScope.display_markers = true;			
 			
 		});
 		
@@ -795,7 +528,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	//Canvas Overlay part:
 	
 	//necessary functions:
-	/*$scope.drawingOnCanvas = function(canvasOverlay, params) {
+	$scope.drawingOnCanvas = function(canvasOverlay, params) {
 		var draw_it = 0;//boolean if set to 1, the canvas is drawn
 
 		//kriging variogram calculation
@@ -991,43 +724,21 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		            .drawing($scope.drawingOnCanvas)
 		            .addTo(map);
 	    }
-	});*/
-	
+	});
 	//Heatcanvas try:
 	//Definition of a global function, this way it can be called inside the interpolate-module
-	$rootScope.updateHeatmapData = function(measurements) {
-		if ($rootScope.heatmap_visible == true) {
-			$rootScope.heatmap.clear();
-			$rootScope.heatmap.resetValues();
-		}
-		if (measurements.length > 3) {
+	/*$rootScope.getInterpolation = function(measurements) {
+		if (measurements.length > 0) {
 			for(var i=0,l=measurements.length; i<l; i++) {
                 $rootScope.heatmap.pushData(measurements[i][0], measurements[i][1], measurements[i][2]);
             }
-			/*leafletData.getLayers().then(function(baselayers) {
-				console.log($rootScope.marker_cluster.getBounds());
-			});*/
-			if ($rootScope.heatmap_visible == false) {
-				leafletData.getMap().then(function(map) {
-					$rootScope.heatmap.addTo(map);
-					//$rootScope.heatmap.setMarkerCluster($rootScope.marker_cluster);
-					//console.log("Map: ", map.getSize().x, map.getSize().y);
-					//console.log("EditItems: ", $rootScope.editItems);
-					//console.log("Marker bounds: ", $rootScope.marker_cluster);
-				});	
-				$rootScope.heatmap_visible = true;
-			} else {
-				$rootScope.heatmap.redraw();
-			}
 		}
 	}
-	
 	//Leaflet.heatcanvas:
 	$rootScope.heatmap = new
                 L.TileLayer.HeatCanvas({},{'step':0.5,
-                'degree':HeatCanvas.CUBIC, 'opacity':0.7},$rootScope.marker_cluster);
-	
-	
+                'degree':HeatCanvas.LINEAR, 'opacity':0.7});
+				
 	/*if ($rootScope.measurements.length > 0) {
 		!$scope.display_heatcanvas;*/
 	//$rootScope.heatmap.addTo($rootScope.map);
