@@ -638,10 +638,10 @@
 			for (var i=0;i<data.length;i++) {
 			   minCount = (data[i].count<minCount)?data[i].count:minCount;
 			   maxCount = (data[i].count>maxCount)?data[i].count:maxCount;
-			   minX = (data[i].x<minX)?data[i].x:minX;
-			   maxX = (data[i].x<maxX)?data[i].x:maxX;
+			   minX = (data[i].x<minX)?data[i].x:minX;	//2 Fehler!
+			   maxX = (data[i].x>maxX)?data[i].x:maxX;
 			   minY = (data[i].y<minY)?data[i].y:minY;
-			   maxY = (data[i].y<maxY)?data[i].y:maxY;
+			   maxY = (data[i].y>maxY)?data[i].y:maxY;
 
 			}
 
