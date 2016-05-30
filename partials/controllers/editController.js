@@ -1,4 +1,4 @@
-app.controller('editCtrl', [ '$scope', '$rootScope', '$http',  function($scope, $rootScope, $http) {
+app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  function($scope, $rootScope, $http, leafletData) {
  
 	console.log("editController is OK");
 	
@@ -74,7 +74,7 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http',  function($scope, 
 					arrayTemp.push($scope.interarray);
 					console.log("ArrayTEMP.........................................");
 					console.log(arrayTemp);*/
-					
+					leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 				});
 			//Existing markers that are already stored inside the database -> UPDATE
 			} else {
@@ -112,9 +112,10 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http',  function($scope, 
 					}
 					//Remove entry from database:
 					$http.get('partials/controllers/deleteData.php?ID=' + $scope.feature.id).success(function(data,status) {});
-				}	
+				}		
 			});
 		}
+		leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 	}
 	
 	$rootScope.$on("startedit", function (event, data) {

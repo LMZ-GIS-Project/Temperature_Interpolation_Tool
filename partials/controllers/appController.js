@@ -560,16 +560,8 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					//Add marker object to marker array:
 					$rootScope.marker_array.push(marker);
 					
-					//Heatcanvas:Adding measurement data for interpolation:
-					/*var this_measurement = new Array(eval(feature.geometry.coordinates[0]), eval(feature.geometry.coordinates[1]), parseFloat(feature.properties.temp));
-					$rootScope.measurements.push(this_measurement);*/
-					
 					//Add marker to marker_cluster object, used to get bounds from markers:
 					$rootScope.marker_cluster.addLayer(marker);
-					
-					
-					
-					//$rootScope.measurements.data.push({lat: eval(feature.geometry.coordinates[0]), lng:eval(feature.geometry.coordinates[1]), temp: parseFloat(feature.properties.temp)});
 				}
 				// if marker is already displayed, check if necessary to update the value:
 				else {
@@ -592,6 +584,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 						 
 						
 					});
+					//leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 				}
 				
 				//Add id of returned marker object to array:
@@ -608,21 +601,17 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				if (index_marker == -1) {
 					var index_deleted_marker = $rootScope.markers.indexOf(parseInt(marker_id));
 					$rootScope.markers.splice(index_deleted_marker, 1);
+					//for (var i = 0; i < $rootScope.marker_array.length; i++){
 					$rootScope.marker_array.forEach(function(marker_object) {
 						if (parseInt(marker_object.id) == parseInt(marker_id)) {
 							$rootScope.editItems.removeLayer(marker_object);
+							var marker_index = $rootScope.marker_array.indexOf(marker_object);
+							console.log("id:", marker_object.id, ", indexOf: ", marker_index);
+							$rootScope.marker_array.splice(marker_index,1);
 						}
-					});
-				}		
+					});			
+				}
 			});
-			
-			//Leaflet.Heat:
-			//leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
-			
-			//Heatcanvas: Call heatmap measurement function to add data to heatmap for creation of heatmap:
-			/*if ($rootScope.display_markers == false || $rootScope.updateMarkers.length > 0) {
-				$rootScope.updateHeatmapData($rootScope.measurements);
-			}*/
 			
 			//after first use -> set $scope.display_markers to true:
 			$rootScope.display_markers = true;
@@ -640,9 +629,10 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				});
 				$rootScope.heatmap_visible = true;
 			}
-		});
-		
-		
+			
+			//Automatically pan the map object by 10 pixels and back to initialize the redrawing of the canvas:
+			leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+		});		
     };
 	
 	$scope.show = function() {
@@ -766,14 +756,32 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				for (var i = x_offset; i < rec_incl_off_x; i += 10){
 					for ( var j = y_offset; j < rec_incl_off_y; j += 10) {
 						//calculate the current position in lat / lng
-					//	var k = i + 5 - x_offset;
-					//	var lng =  x_offset_deg + ( k * x_factor );
-					//	k = j + 5 - y_offset;
-					//	var lat = y_offset_deg - ( k * y_factor );
+						var k = i + 5 - x_offset;
+						var lng =  x_offset_deg + ( k * x_factor );
+						k = j + 5 - y_offset;
+						var lat = y_offset_deg - ( k * y_factor );
 
-						var value = predict_point(x_offset_deg + ( (i + 5) * x_factor ), y_offset_deg - ( (j + 5) * y_factor ), variogram);//->store the value at position in value
-
-						ctx.fillStyle = hslToRgb((2/3) + (value - color_offset) * color_model, 1, 0.5);//map the value to a color range
+						//var value = predict_point(x_offset_deg + ( (i + 5) * x_factor ), y_offset_deg - ( (j + 5) * y_factor ), variogram);//->store the value at position in value
+						var value = predict_point(lng,lat,variogram);
+						var color;
+						// if (value < 0){
+							// color = value + color_offset;
+							// color_model=Math.abs(color_model);
+						// }
+						// else {
+							// color = value - color_offset; 
+						// }
+						
+						
+						//test5 = (2/3) +(value-color_offset) * color_model
+						test5 = ((2/3)/(Math.max.apply(null, values) - Math.min.apply(null, values))) * (-1) * value;
+						if (test5 <0){
+							test5 = test5+ (2*test5);
+						}
+						ctx.fillStyle = hslToRgb(test5, 1, 0.5) ;//map the value to a color range
+						
+							
+						
 						ctx.fillRect(i,j,10,10);//draw a rectangular on canvas with height and width 1 pixel
 					}
 				}
@@ -836,66 +844,4 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			}
 			return Z;
 		}
-		
-		//Canvas:
-		/*$rootScope.canvas_layer = new L.canvasOverlay();
-		leafletData.getMap().then(function(map) {
-			if (typeof map != 'undefined'){
-				$rootScope.map = map;
-				$rootScope.canvas_layer
-					.drawing($scope.drawingOnCanvas)
-					.addTo(map);
-			}
-		});*/
-	
-	/* END OF CANVAS OVERLAY*/
-	
-	
-	//Heatcanvas:
-	//Definition of a global function, this way it can be called inside the interpolate-module
-	/*$rootScope.updateHeatmapData = function(measurements) {
-		if ($rootScope.heatmap_visible == true) {
-			$rootScope.heatmap.clear();
-			$rootScope.heatmap.resetValues();
-		}
-		if (measurements.length > 3) {
-			for(var i=0,l=measurements.length; i<l; i++) {
-                $rootScope.heatmap.pushData(measurements[i][0], measurements[i][1], measurements[i][2]);
-            }
-			if ($rootScope.heatmap_visible == false) {
-				leafletData.getMap().then(function(map) {
-					$rootScope.heatmap.addTo(map);
-					//$rootScope.heatmap.setMarkerCluster($rootScope.marker_cluster);
-					//console.log("Map: ", map.getSize().x, map.getSize().y);
-					//console.log("EditItems: ", $rootScope.editItems);
-					//console.log("Marker bounds: ", $rootScope.marker_cluster);
-				});	
-				$rootScope.heatmap_visible = true;
-			} else {
-				$rootScope.heatmap.redraw();
-			}
-		}
-	}
-	
-	//Leaflet.heatcanvas:
-	$rootScope.heatmap = new
-                L.TileLayer.HeatCanvas({},{'step':0.5,
-                'degree':HeatCanvas.CUBIC, 'opacity':0.7},$rootScope.marker_cluster);*/
-	
-	
-	/*if ($rootScope.measurements.length > 0) {
-		!$scope.display_heatcanvas;*/
-	//$rootScope.heatmap.addTo($rootScope.map);
-	//}
-				
-    /*heatmap.onRenderingStart(function(){
-		document.getElementById("status").innerHTML = 'rendering';  
-    });
-	
-    heatmap.onRenderingEnd(function(){
-        document.getElementById("status").innerHTML = '';  
-    });*/
-	
-	//$rootScope.displayMarkers();
-
 } ]);
