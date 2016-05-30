@@ -25,72 +25,11 @@ onmessage = function(e){
 
 function calc(params) {
     value = params.value || {};
+	//console.log(value);
     degree = params.degree || 1;
-	
-	//Initialize kriging variogram:
-	//modelsetup of kriging
-			/*var model = "exponential";
-			var sigma2 = 0.1, alpha = 1;
-			var variogram = kriging.train(values, x, y, model, sigma2, alpha);*/ //somehow get access to kriging library!
-	
-	//Test:
-	var minValue = 1000,maxValue = 0, minX = 1000, maxX = 0, minY = 1000, maxY = 0;
-	for (var i=0;i<params.v.length;i++) {
-			   minValue = (params.v[i]<minValue)?params.v[i]:minValue;
-			   maxValue = (params.v[i]>maxValue)?params.v[i]:maxValue;
-			   minX = (params.x[i]<minX)?params.x[i]:minX;
-			   maxX = (params.x[i]>maxX)?params.x[i]:maxX;
-			   minY = (params.y[i]<minY)?params.y[i]:minY;
-			   maxY = (params.y[i]>maxY)?params.y[i]:maxY;
 
-	}
-	
-	for (var i=0;i<params.width;i++)
-	{
-				for (var j=0;j<params.height;j++)
-				{
-					// This is the IDW Algorithm
-					var wj = 0;
-					var wis = [];
-					for (var k=0;k<params.v.length;k++)	{
-						//var dx = idwcells.width*(data[k].x-minX)/(maxX-minX)-i;
-						var dx = params.x[k]-(i);
-						//var dy = idwcells.height*(data[k].y-minY)/(maxY-minY)-j;
-						var dy = params.y[k]-(j);
-						var dk = Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
-						var p = 3;
-						var wj_inst = 1/(Math.pow(dk,p));
-						wj += wj_inst;
-						wis.push(wj_inst*params.v[k]);
-					}
-					var u = 0;
-					for (var l=0;l<wis.length;l++)
-					{
-						u += wis[l]/wj;
-					}
-					if (isNaN(u) == true) {
-						for (var k=0;k<params.v.length;k++)	{
-							if (params.x[k] == i && params.y[k] == j) {
-								u = params.v[k];
-							}
-						}
-					}
-					
-					//Kriging test:
-					//var u = predict_point(i,j,variogram);
-								
-					var uNorm = (u-minValue)/(maxValue-minValue);
-					var id = i+j*params.width;
-					//console.log("id: ", id, ", uNorm: ", uNorm);
-                    /*if(value[id]){
-                        value[id] = value[id] + u;           
-                    } else {
-                        value[id] = u;
-                    }*/
-					value[id] = uNorm;
-				}
-	}
-    /*for(var pos in params.data){
+    for(var pos in params.data){
+		//console.log(pos);
         var data = params.data[pos];
         var radius = Math.floor(Math.pow((data / params.step), 1/degree));
         
@@ -126,31 +65,8 @@ function calc(params) {
                 }
             }
         }        
-    }*/
+    }
 	//console.log(Object.keys(value).length);
 	//console.log(value);
     postMessage({'value': value});
 }
-
-//predict value with kriging for this specific point (x, y); variogram is calculated on the top
-		function predict_point(x, y, variogram) {
-			var i, k = Array(variogram.n);
-			for(i=0;i<variogram.n;i++)
-				k[i] = variogram.model(Math.pow(Math.pow(x-variogram.x[i], 2)+
-					   Math.pow(y-variogram.y[i], 2), 0.5),
-					   variogram.nugget, variogram.range, 
-					   variogram.sill, variogram.A);
-			return matrix_multiply(k, variogram.M, 1, variogram.n, 1)[0];
-		}
-
-		function matrix_multiply(X, Y, n, m, p) {
-			var i, j, k, Z = Array(n*p);
-			for(i=0;i<n;i++) {
-				for(j=0;j<p;j++) {
-				Z[i*p+j] = 0;
-				for(k=0;k<m;k++)
-					Z[i*p+j] += X[i*m+k]*Y[k*p+j];
-				}
-			}
-			return Z;
-		}

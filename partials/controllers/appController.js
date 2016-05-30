@@ -14,7 +14,6 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	$scope.registering = false;	//register modal window
 	$scope.gettingclass = false;	//class modal window
 	$scope.modalalert = false;		//alert modal window
-	$scope.choosingint = false;		//interpolation method modal window
 	
 	$rootScope.modaltitel = "";
 	$rootScope.modalmessage = "";
@@ -28,7 +27,6 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	
 	//Control variable for heatmap:
 	$rootScope.heatmap_visible = false;
-	$rootScope.interpolation_method = "Kriging";
 	
 	//Variable for "geolocate" button:
 	$scope.locateButton;
@@ -36,6 +34,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	
 	//Marker variables and functions:
 	$rootScope.marker_array = [];						//all markers displayed on the map are stored inside this array
+	$rootScope.marker_cluster = new L.featureGroup();	//again all markers are stored inside used to get bounds for markers in HeatCanvas
 	
 	$rootScope.color_array = ['black','blue','yellow','red','green-dark','cyan','orange','blue-dark','purple','brown'];	//Array for color of markers, 0 = teacher, 1-9 = pupils / groups
 	
@@ -98,16 +97,14 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		thisIcon = $rootScope.getMarkerIcon(temperature, type, $rootScope.getGroupnumber(username));
 		var marker = L.marker([eval(lat), eval(lon)], {icon: thisIcon});
 		
-		//adding "click" event to marker object
 		marker.on("click", function (e) {
-			$rootScope.$broadcast("startedit", {feature: marker});
+                        $rootScope.$broadcast("startedit", {feature: marker});
         });
 		
 		return marker;
 	}
 	
-	//Function to display "alert" in a modal window: called everytime a modal window for an alert should be displayed,
-	//arguments: titel = header of modal window, message = message within body of modal window
+	//Function to display "alert" in a modal window:
 	$rootScope.showAlert = function(titel,message) {
 		$rootScope.modaltitel = titel;
 		$rootScope.modalmessage = message;
@@ -117,6 +114,11 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	
 		
 	function onLocationFound(e) {
+		
+		/*var radius = e.accuracy / 2;
+		L.marker(e.latlng).addTo(map)
+			.bindPopup("You are within " + radius + " meters from this point").openPopup();
+		L.circle(e.latlng, radius).addTo(map);*/
 		
 		//Coordinates of location for marker:
 		var latLon = e.latlng;
@@ -134,7 +136,6 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			$rootScope.$broadcast("startedit", {feature: marker});
 		}
 		
-		//return button state to default state:
 		$scope.locateButton.state('un_loaded');
 	}
 
@@ -206,32 +207,58 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		}		
 	});
 	
-	var pluginLayerObject = new Array();	
+	var pluginLayerObject = new Array();
+	
+	//Leaflet.Heat:
+	/*---------------------Farbskala festlegen-------------------------------------------------
+
+	    var gradient = {
+        0.0: "rgba(000,000,255,0)",
+        0.2: "rgba(000,000,255,1)",
+        0.4: "rgba(000,255,255,1)",
+        0.6: "rgba(000,255,000,1)",
+        0.8: "rgba(255,255,000,1)",
+        1.0: "rgba(255,000,000,1)"
+    };
+    var gradientImage = (function () {
+        var canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 256;
+        var ctx = canvas.getContext("2d");
+        var grad = ctx.createLinearGradient(0, 0, 1, 256);
+
+        for (var x in gradient) {
+            grad.addColorStop(x, gradient[x]);
+        }
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 1, 256);
+
+        return ctx.getImageData(0, 0, 1, 256).data;
+    })();
+	
+	---------------------Ende Farbskala festlegen----------------------------------------------------*/
+	
 	
 // Perform some post init adjustments
 	
 	leafletData.getMap().then(function(map) {
-		//console.log("Map object: ",map);
-		
-		//Adding Leaflet.EasyButton button for the geolocalization of a user:
+		console.log("Map object: ",map);
 		$scope.locateButton = L.easyButton({
 			states:[{
 				stateName: 'un_loaded',
 				icon: 'fa-location-arrow',
 				title: 'Benutzer orten!',
 				onClick: function(control) {
-					//only if user is logged in, the geolocalization process is started,
-					//necessary since a marker is created automatically:
 					if ($rootScope.username != "") {
 						control.state("loading");
-						//Start geolocalization:
 						$scope.getLocation();
 					} else {
 						$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
 					}
 				}
 			}, {
-				stateName: 'loading',			//display of spinning animation in button while locating user
+				stateName: 'loading',
 				icon: 'fa-spinner fa-spin',
 				title: 'Am Verorten!'
 			}, {
@@ -242,30 +269,11 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		});
 		$scope.locateButton.addTo(map);
 		
-		//console.log("Test control: ", $scope.locateButton);
+		console.log("Test control: ", $scope.locateButton);
 		
 		//Geolocation using leaflet map object:
 		map.on('locationfound', onLocationFound);
 		map.on('locationerror', onLocationError);
-		
-		//Button to choose interpolation method:
-		$scope.intMethodButton = L.easyButton({
-			states:[{
-				stateName: 'default',
-				icon: 'fa-calculator',
-				title: 'Interpolationsmethode definieren!',
-				onClick: function(control) {
-					if ($rootScope.username != "" && $rootScope.heatmap_visible == true) {
-						control.state("choosing");
-						$rootScope.$broadcast("startchoosing");
-					} else {
-						//Displaying alert in modal window by calling showAlert function, passed arguments: header as well as message
-						$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
-					}
-				}
-			}]
-		});
-		$scope.intMethodButton.addTo(map);
 		
 		//Save button for export of heatmap:
 		$scope.saveButton = L.easyButton({
@@ -277,14 +285,15 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					if ($rootScope.username != "" && $rootScope.heatmap_visible == true) {
 						control.state("saving");
 						var date = new Date();
-						$rootScope.canvas_layer.exportPNG($rootScope.school,$rootScope.classname,$rootScope.interpolation_method,date,control);
+						//$rootScope.heatmap.save($rootScope.school,$rootScope.classname,date,control);
+						$rootScope.canvas_layer.save($rootScope.school,$rootScope.classname,date,control);
 					} else {
-						//Displaying alert in modal window by calling showAlert function, passed arguments: header as well as message
+						//alert("Bitte loggen Sie sich ein!");
 						$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
 					}
 				}
 			}, {
-				stateName: 'saving',	//if saving takes a while, a spinning animation will be displayed!
+				stateName: 'saving',
 				icon: 'fa-spinner fa-spin',
 				title: 'Am Speichern!'
 			}, {
@@ -295,12 +304,22 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		});
 		$scope.saveButton.addTo(map);
 		
+		/*HeatLayer:
+		/*addressPoints = addressPoints.map(function(p) { return [p[0], p[1]] } );
+		Heat:	--> multidimensional array needed
+		$rootScope.heat = L.heatLayer([[48.7,8.6]]).addTo(map);*/
+		
+		//----------Heatlayer erhält als Imput die Koordinaten und die Temp als Array------------------
+		//----------Heatlayer erhält die Information zur Gestaltung------------------------------------
+		//$rootScope.heat = L.heatLayer(arrayTemp, {gradientImage}).addTo(map);
+		
 		// Instantiate Draw Plugin
 		leafletData.getLayers().then(function(baselayers) {
 			$rootScope.editItems = baselayers.overlays.draw;
 			
 			
 			// Handle creation of temperature markers
+			
 			map.on('draw:created', function (e) {
 				if ($rootScope.username) {
 					var layer = e.layer;
@@ -539,6 +558,9 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					
 					//Add marker object to marker array:
 					$rootScope.marker_array.push(marker);
+					
+					//Add marker to marker_cluster object, used to get bounds from markers:
+					$rootScope.marker_cluster.addLayer(marker);
 				}
 				// if marker is already displayed, check if necessary to update the value:
 				else {
@@ -739,6 +761,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 						var lat = y_offset_deg - ( k * y_factor );
 
 						//var value = predict_point(x_offset_deg + ( (i + 5) * x_factor ), y_offset_deg - ( (j + 5) * y_factor ), variogram);//->store the value at position in value
+<<<<<<< HEAD
 						var value;
 						if ($rootScope.interpolation_method == "Kriging") {
 							value = predict_point(lng,lat,variogram);
@@ -770,6 +793,9 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 							}*/
 						}
 						
+=======
+						var value = predict_point(lng,lat,variogram);
+>>>>>>> parent of a9781d7... Added Int Method Selection
 						var color;
 						// if (value < 0){
 							// color = value + color_offset;
