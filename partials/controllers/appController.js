@@ -35,7 +35,6 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	
 	
 	//Marker variables and functions:
-	
 	$rootScope.marker_array = [];						//all markers displayed on the map are stored inside this array
 	
 	$rootScope.color_array = ['black','blue','yellow','red','green-dark','cyan','orange','blue-dark','purple','brown'];	//Array for color of markers, 0 = teacher, 1-9 = pupils / groups
@@ -747,26 +746,28 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 							var wj = 0;
 							var wis = [];
 							for (var k=0;k<values.length;k++)	{
-								var dx = x[k]-(i);
-								var dy = y[k]-(j);
+								var dx = x[k]-i;
+								var dy = y[k]-j;
 								var dk = Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
 								var p = 3;
 								var wj_inst = 1/(Math.pow(dk,p));
 								wj += wj_inst;
 								wis.push(wj_inst*values[k]);
 							}
-							var value = 0;
+							value = 0;
 							for (var l=0;l<wis.length;l++)
 							{
 								value += wis[l]/wj;
 							}
-							if (isNaN(value) == true) {
+							//console.log("IDW value: ", value);
+							/*if (isNaN(value) == true) {
 								for (var k=0;k<values.length;k++)	{
 									if (x[k] == i && y[k] == j) {
 										value = values[k];
+										console.log(value);
 									}
 								}
-							}
+							}*/
 						}
 						
 						var color;

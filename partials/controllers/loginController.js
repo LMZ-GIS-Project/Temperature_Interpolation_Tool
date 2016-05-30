@@ -1,4 +1,4 @@
-app.controller('loginCtrl', [ '$scope', '$rootScope', '$http',  function($scope, $rootScope, $http) {
+app.controller('loginCtrl', [ '$scope', '$rootScope', '$http', 'leafletData', function($scope, $rootScope, $http, leafletData) {
 	//Check code for login. Problem when changing user with the creation of markers? Implement logoff-function?
 	console.log("loginController is OK");
 	
@@ -27,7 +27,6 @@ app.controller('loginCtrl', [ '$scope', '$rootScope', '$http',  function($scope,
 					if ($rootScope.username != "" && $rootScope.username != $scope.user) {
 						$rootScope.marker_array.forEach(function(marker) {
 							$rootScope.editItems.removeLayer(marker);
-							$rootScope.marker_cluster.removeLayer(marker);
 						});
 						$rootScope.markers = [];
 						$rootScope.markers.length = 0;
@@ -65,7 +64,9 @@ app.controller('loginCtrl', [ '$scope', '$rootScope', '$http',  function($scope,
 						//Changing the color of the default icon depending on the group:
 						$rootScope.awesomeMarkerIconDefault.options.markerColor = $rootScope.color_array[$rootScope.getGroupnumber($rootScope.username)];
 						
-						//alert("Login was successful"); //Error?
+						//Automatically pan the map object by 10 pixels and back to initialize the redrawing of the canvas:
+						leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+			
 						$rootScope.showAlert("Erfolg!","Der Login war erfolgreich!");
 					}
 					
