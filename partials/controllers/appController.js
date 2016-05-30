@@ -648,7 +648,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				y.push(lat);
 				values.push(value);
 			});
-
+			console.log("Anzahl Marker: ", values.length);
 			//color range setup
 			var color_model = (2/3)/(Math.max.apply(null, values) - Math.min.apply(null, values)) * (-1);
 			var color_offset = Math.min.apply(null, values);

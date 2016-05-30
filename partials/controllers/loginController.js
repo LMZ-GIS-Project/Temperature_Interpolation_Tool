@@ -27,9 +27,13 @@ app.controller('loginCtrl', [ '$scope', '$rootScope', '$http', 'leafletData', fu
 					if ($rootScope.username != "" && $rootScope.username != $scope.user) {
 						$rootScope.marker_array.forEach(function(marker) {
 							$rootScope.editItems.removeLayer(marker);
+							/*var marker_index = $rootScope.marker_array.indexOf(marker);
+							$rootScope.marker_array.splice(marker_index,1);*/
 						});
 						$rootScope.markers = [];
 						$rootScope.markers.length = 0;
+						$rootScope.marker_array = new Array();
+						$rootScope.marker_array.length = 0;
 						$rootScope.display_markers = false;	//defines that all markers are displayed for the first time after user change
 						$rootScope.school = "";				//Schoolname "reset"
 						$rootScope.classname = "";			//Classname "reset"
