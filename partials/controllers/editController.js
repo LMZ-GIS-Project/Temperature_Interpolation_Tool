@@ -29,8 +29,8 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 			// Save the temperature within the feature
 			$scope.feature.temp = $scope.temp;
 		
-			console.log("Feature", $scope.feature);
-			console.log("Feature", $scope.feature.id);
+			//console.log("Feature", $scope.feature);
+			//console.log("Feature", $scope.feature.id);
 			// Lets loop through all the elements that are drawn by now
 			// pick the correct marker and set the temperature
 		
@@ -48,32 +48,16 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 				//Saving the measurement inside the database by passing the username, coordinates (lat,lon) and the temperature:
 				$http.get('partials/controllers/saveData.php?USER=' + $rootScope.username + '&LAT=' + latLon.lat + '&LON=' + latLon.lng + '&TEMP=' + $scope.temp + '&EXISTS=false&ID=-1').success(function(data,status) {
 					//console.log("Returned data");
-					console.log(data);
+					//console.log(data);
 					
 					//Add id of marker entry to array:
-					//$rootScope.markers.push(parseInt(data));
-					//$scope.feature.id = data;
 					$scope.feature.id = parseInt(data);
 					$rootScope.markers.push($scope.feature.id);
-					//$scope.arrayID.push($scope.feature.id);
 				
 					//Add marker object to marker array:
 					$rootScope.marker_array.push($scope.feature);
-					//$scope.arrayMarker.push($scope.feature);
 					
-					/*Leaflet.Heat:
-					--------Speichern der Werte LAT LONG und TEMP in einem Array-------------------------
-
-					$scope.interarray = [];
-					inttemp = parseInt($scope.temp);
-					$scope.interarray.push(latLon["lat"], latLon["lng"],inttemp);
-
-					console.log("interarray......................................");
-					console.log($scope.interarray);
-
-					arrayTemp.push($scope.interarray);
-					console.log("ArrayTEMP.........................................");
-					console.log(arrayTemp);*/
+					//Automatically pan map to trigger canvas redraw:
 					leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 				});
 			//Existing markers that are already stored inside the database -> UPDATE
@@ -81,7 +65,6 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 				$http.get('partials/controllers/saveData.php?USER=' + $rootScope.username + '&LAT=' + latLon.lat + '&LON=' + latLon.lng + '&TEMP=' + $scope.temp + '&EXISTS=true&ID=' + $scope.feature.id ).success(function(data,status) {});
 			}
 		} else {
-			//alert("Please enter values between -30°C and 45°C!");
 			$rootScope.showAlert("Achtung!","Bitte geben Sie Werte zwischen -30°C und +45°C ein!");
 			$scope.temp = "";
 		}	
@@ -100,9 +83,6 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 				if (parseInt($scope.feature.id) == parseInt(marker.id)) {
 					$rootScope.editItems.removeLayer(marker);
 					
-					//Remove marker from marker cluster:
-					$rootScope.marker_cluster.removeLayer(marker);
-					
 					//Remove id from array used to controll addition of markers:
 					var id_index = $rootScope.markers.indexOf($scope.feature.id);
 					if (id_index > -1) {
@@ -115,6 +95,8 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 				}		
 			});
 		}
+		
+		//Automatically pan map to trigger canvas redraw:
 		leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 	}
 	

@@ -127,12 +127,12 @@ L.CanvasOverlay = L.Class.extend({
 
     },
 	
-	save: function(school,classname,date,control) {
+	exportPNG: function(school,classname,interpolation_method,date,control) {
 		var year = date.getFullYear();
 		var month = date.getMonth() + 1;
 		var day = date.getDate();
 		this._canvas.toBlob(function(blob) {
-			saveAs(blob, school+"_"+classname+"_"+year.toString()+"_"+month.toString()+"_"+day.toString()+".png");
+			saveAs(blob, school+"_"+classname+"_"+interpolation_method+"_"+year.toString()+"_"+month.toString()+"_"+day.toString()+".png");
 		});
 		control.state("un_saved");
 	}
