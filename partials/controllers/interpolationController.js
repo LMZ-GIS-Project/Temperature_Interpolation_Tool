@@ -12,7 +12,8 @@ app.controller('interpolationCtrl', [ '$scope', '$rootScope', 'leafletData', fun
 			$rootScope.interpolation_method = $scope.intmethod;
 			
 			//Automatically pan the map object by 10 pixels and back to initialize the redrawing of the canvas:
-			leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+			//leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+			$rootScope.canvas_layer.redraw();
 		}
 	}
 	
