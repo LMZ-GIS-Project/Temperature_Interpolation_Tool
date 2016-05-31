@@ -48,7 +48,6 @@ app.controller('loginCtrl', [ '$scope', '$rootScope', '$http', 'leafletData', fu
 						console.log("User is a teacher!");
 						//Save username as teachername:
 						$rootScope.teachername = $scope.user;
-						//alert("Login was successful!"); //Error?
 						$scope.switchToClass();
 						//return;
 					//for users that are no teachers the markers can be displayed directly:
@@ -68,34 +67,37 @@ app.controller('loginCtrl', [ '$scope', '$rootScope', '$http', 'leafletData', fu
 						//Changing the color of the default icon depending on the group:
 						$rootScope.awesomeMarkerIconDefault.options.markerColor = $rootScope.color_array[$rootScope.getGroupnumber($rootScope.username)];
 						
-						//Automatically pan the map object by 10 pixels and back to initialize the redrawing of the canvas:
-						leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+						//Automatically pan the map object by 1 pixels and back to initialize the redrawing of the canvas:
+						//leafletData.getMap().then(function(map){map.panBy([1,1]);map.panBy([-1,-1]);return;});
+						if ($rootScope.heatmap_visible == true) {
+							$rootScope.canvas_layer.redraw();
+						}
 			
 						$rootScope.showAlert("Erfolg!","Der Login war erfolgreich!");
 					}
 					
 				//If the username is neither in teachers nor in users:
 				} else {
-					//alert("Username does not exists! You need to register!");
 					$rootScope.showAlert("Fehler!","Der eingegebene Benutzername ist nicht registriert!");
 					$scope.loggingin = true;
 					$scope.user = $rootScope.username;
 				}
 			});
 		} else {
-			//alert("Please enter a username before logging in!");
 			$rootScope.showAlert("Achtung!","Bitte geben Sie einen Benutzernamen ein!");
 			$scope.loggingin = true;
 		}
 		
 	}
 	
+	//Function to switch from login- to register-Interface for teachers if they want to use the registration function:
 	$scope.switchToRegister = function() {
 		$scope.loggingin = false;
 		$scope.registering = true;
 		$rootScope.$broadcast("startregister");
 	}
 	
+	//Function to switch from login- to class-Interface for teachers to enter the school- and classname for the project they are now working on:
 	$scope.switchToClass = function() {
 		console.log("in switchToClass");
 		$scope.loggingin = false;

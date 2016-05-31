@@ -2,9 +2,9 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
  
 	console.log("appController is OK");
 	
-	//Boolean control variables:
+	//Definition of important variables:
 	
-	//to control displaying of modal windows:
+	//1.) Boolean control variables to control displaying of modal windows:
 	$scope.editable = true;		//save- / delete-button in edit modal window
 	$scope.teacher = false;		//register button in login modal window
 	$scope.inclass = false;		//teacher modal window for defintion of class
@@ -16,6 +16,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	$scope.modalalert = false;		//alert modal window
 	$scope.choosingint = false;		//interpolation method modal window
 	
+	//Variables used to bind titel and message to alert modal window using showAlert()-function (in this appController) and the alertController:
 	$rootScope.modaltitel = "";
 	$rootScope.modalmessage = "";
 	
@@ -35,10 +36,15 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 	
 	
 	//Marker variables and functions:
-	
-	$rootScope.marker_array = [];						//all markers displayed on the map are stored inside this array
-	
-	$rootScope.color_array = ['black','blue','yellow','red','green-dark','cyan','orange','blue-dark','purple','brown'];	//Array for color of markers, 0 = teacher, 1-9 = pupils / groups
+	//Create an array to store ID (!) of markers that is used to control the display of the markers with the timout function:
+	$rootScope.markers = [];
+	//all markers displayed on the map are stored inside this array as marker objects used to remove the respective layers from editItems:
+	$rootScope.marker_array = [];
+	//Create an array to store the marker objects that are created / changed by other users used to control the respective icon states (default->updating->updated->default):
+	$rootScope.updateMarkers = [];
+	//Array of different colors used to determine the "unique" markerColor for each group:
+	//Array for color of markers, 0 = teacher, 1-9 = pupils / groups
+	$rootScope.color_array = ['black','blue','yellow','red','green-dark','cyan','orange','blue-dark','purple','brown'];	
 	
 	//Default marker icon:
 	$rootScope.awesomeMarkerIconDefault = L.ExtraMarkers.icon({
@@ -84,7 +90,8 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 									markerColor: $rootScope.color_array[groupnumber]
 							});
 							break;
-							
+			
+			//default case if wrong type is passed to function:
 			default:	return L.ExtraMarkers.icon({
 									icon: 'fa-number',
 									number: Math.round(parseFloat(temp)),
@@ -116,7 +123,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		$rootScope.$broadcast("startalert");
 	}
 	
-		
+	//If locating of user was successful (->"fires" an event) this function is called:	
 	function onLocationFound(e) {
 		
 		//Coordinates of location for marker:
@@ -138,12 +145,14 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		//return button state to default state:
 		$scope.locateButton.state('un_loaded');
 	}
-
+	
+	//If locating of user was not successful (->"fires" an event) this function is called:	
 	function onLocationError(e) {
 		alert(e.message);
 		$scope.locateButton.state('error');
 	}
- 
+	
+	//Initiate the localization process, this function is called by clicking on the saveButton below (-> click-event -> call this function):
     $scope.getLocation = function () {
 		leafletData.getMap().then(function(map) {
 			//map.locate({setView: true, maxZoom: 11});
@@ -246,8 +255,8 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		//console.log("Test control: ", $scope.locateButton);
 		
 		//Geolocation using leaflet map object:
-		map.on('locationfound', onLocationFound);
-		map.on('locationerror', onLocationError);
+		map.on('locationfound', onLocationFound);	//if localization is successful event "locationfound" will be "fired" -> call function onLocationFound (see above)
+		map.on('locationerror', onLocationError);	//if localization is not successful event "locationerror" will be "fired" -> call function onLocationError (see above)
 		
 		//Button to choose interpolation method:
 		$scope.intMethodButton = L.easyButton({
@@ -410,64 +419,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				
 				$rootScope.map = map;
 			
-	});	// map preparation
-		/*
-		// Define zoom dependent smoothFactor
-		map.on("zoomstart", function(event){
-			
-			var zoom = this.getZoom();
-			// Check, if RiverLayer is active
-			if (this.hasLayer($rootScope.rivers)) {
-				
-				$rootScope.rivers.eachLayer(function(layer){
-					layer.options.smoothFactor = 12-zoom;
-					
-				});
-			}
-			
-			
-		});
-			
-	
 	});
-		*/
-		
-		
-		
-	
-	/*
-	
-	$scope.$on('sidebar', function(event,data) {
-		leafletData.getMap().then(function(map) {
-					$rootScope.sideBar = L.control.sidebar('sidebar', {
-								position: 'right'
-							});
-					$rootScope.sideBar.addTo(map);
-							
-					$rootScope.sideBar.on("content", function(data) {
-						if (data.id == "search") {
-							$rootScope.$broadcast('rzSliderForceRender');
-							highlightStations(init=true);
-						}
-					});
-					
-							
-				});
-	})
-
-*/
-	//Heatcanvas: Create an array to store the measurement data for interpolation:
-	/*$rootScope.measurements = [];
-	$rootScope.measurements = {
-		max: 45,
-		data: []
-	};*/
-	
-	//Create an array to store id of markers that is used to control the display of the markers with the timout function:
-	$rootScope.markers = [];
-	
-	//Create an array to store the marker objects that are created / changed by other users:
-	$rootScope.updateMarkers = [];
 	
 	//Definition of a global function, this way it can be called inside the interpolate-module
 	$rootScope.displayMarkers = function() {
@@ -500,21 +452,24 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					first login -> display all markers of other clients with standard icon,
 					thereafter: -> display new markers added by other clients -> green*/
 					
+					//first time loading markers:
 					if ($rootScope.display_markers == false) {
-						if (feature.properties.user == $rootScope.username) {
+						if (feature.properties.user == $rootScope.username) { //own markers
 							var marker = $scope.createMarker(feature.geometry.coordinates[0],feature.geometry.coordinates[1],feature.properties.temp,"default",$rootScope.username);
-						} else {
+						} else {	//markers by other groups
 							var marker = $scope.createMarker(feature.geometry.coordinates[0],feature.geometry.coordinates[1],feature.properties.temp,"default",feature.properties.user);
-						}	
-					} else {
+						}
+					} else {	//"updating" -> new markers:
 						if (feature.properties.user == $rootScope.username) {
 							var marker = $scope.createMarker(feature.geometry.coordinates[0],feature.geometry.coordinates[1],feature.properties.temp,"default",feature.properties.user);
 						} else {
+							//create marker with "updating"-icon:
 							var marker = $scope.createMarker(feature.geometry.coordinates[0],feature.geometry.coordinates[1],feature.properties.temp,"updating",feature.properties.user);
 							marker.options.clickable = false;
 							setTimeout(function() {
 								marker.options.clickable = true;
 								thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "updated", $rootScope.getGroupnumber(feature.properties.user));
+								//change icon to "updated":
 								marker.setIcon(thisIcon);
 							},2000);						
 						}
@@ -543,17 +498,23 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				}
 				// if marker is already displayed, check if necessary to update the value:
 				else {
+					
+					//iterate through all displayed markers on map / layers of editItems:
 					$rootScope.marker_array.forEach(function(marker_object) {
-		
+						//Check for id:
 						if (parseInt(marker_object.id) == parseInt(feature.properties.id)) {
+								//Check for new temperature values:
 								if (marker_object.temp != feature.properties.temp) {
+									//change icon to "updating"-state:
 									thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "updating", $rootScope.getGroupnumber(feature.properties.user));
 									marker_object.setIcon(thisIcon);
 									marker_object.options.clickable = false;
 									marker_object.temp = feature.properties.temp.toString();
+									//store marker_object temporarely in updateMarkers-array, is used in next displayMarkers()-call to change icon back to default:
 									$rootScope.updateMarkers.push(marker_object);
 									setTimeout(function() {
 										marker_object.options.clickable = true;
+										//change icon to "updated"-state:
 										thisIcon = $rootScope.getMarkerIcon(feature.properties.temp, "updated", $rootScope.getGroupnumber(feature.properties.user));
 										marker_object.setIcon(thisIcon);
 									},2000);
@@ -562,65 +523,73 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 						 
 						
 					});
-					//leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
 				}
 				
 				//Add id of returned marker object to array:
 				array_marker_ids.push(parseInt(feature.properties.id));
-				//console.log(feature.properties.id);
 				
 			});
 			
-			//Check if displayed marker has been deleted in the meantime:
+			//Check if displayed marker has been deleted in the meantime using the IDs stored in the markers-array:
 			$rootScope.markers.forEach(function(marker_id) {
-				//console.log(marker_id);
+				//Check if ID is stored in array_markers-array which has all the IDs in it that were returned from the database -> latest state!
 				var index_marker = array_marker_ids.indexOf(parseInt(marker_id));
-				//console.log(index_marker);
+				//If ID is not in that array -> -1 will be returned -> marker has been deleted in the meantime:
 				if (index_marker == -1) {
+					//Get position of ID in array markers:
 					var index_deleted_marker = $rootScope.markers.indexOf(parseInt(marker_id));
+					//Delete ID from the array:
 					$rootScope.markers.splice(index_deleted_marker, 1);
-					//for (var i = 0; i < $rootScope.marker_array.length; i++){
+					//Iterate through the marker objects to also delete / remove the marker from map:
 					$rootScope.marker_array.forEach(function(marker_object) {
+						//Check for ID:
 						if (parseInt(marker_object.id) == parseInt(marker_id)) {
+							//Remove from editItems:
 							$rootScope.editItems.removeLayer(marker_object);
+							//Get position of marker object in marker_array-array (all markers on map):
 							var marker_index = $rootScope.marker_array.indexOf(marker_object);
-							console.log("id:", marker_object.id, ", indexOf: ", marker_index);
+							//Delete object from array:
 							$rootScope.marker_array.splice(marker_index,1);
 						}
 					});			
 				}
 			});
 			
-			//after first use -> set $scope.display_markers to true:
+			//after first use -> set $rootScope.display_markers to true meaning that markers are displayed and first "loading process" was successful:
 			$rootScope.display_markers = true;
 			
-			if ($rootScope.marker_array.length > 3) {
-				console.log("in array: ", $rootScope.marker_array.length);
-				$rootScope.canvas_layer = new L.canvasOverlay();
+			//Check if heatmap was already initialized:
+			if ($rootScope.heatmap_visible == false) { /*$rootScope.marker_array.length > 3 &&*/
+				//Add layer to map:
 				leafletData.getMap().then(function(map) {
 					if (typeof map != 'undefined'){
 						$rootScope.map = map;
+						//Add to map and define function used to draw canvas:
 						$rootScope.canvas_layer
 							.drawing($scope.drawingOnCanvas)
 							.addTo(map);
 					}
 				});
 				$rootScope.heatmap_visible = true;
+			} else {
+				//Automatically pan the map object by 1 pixels and back to initialize the redrawing of the canvas:
+				//leafletData.getMap().then(function(map){map.panBy([1,1]);map.panBy([-1,-1]);return;});
+				$rootScope.canvas_layer.redraw();
 			}
 			
-			//Automatically pan the map object by 10 pixels and back to initialize the redrawing of the canvas:
-			leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+			
 		});		
     };
 	
+	//Display login-Interface by clicking on "Anmelden"-button:
 	$scope.show = function() {
 		console.log("Clicked Login");
 		$rootScope.$broadcast("startlogin");
 	}	
 	
-	//Canvas Overlay part:
+	//Canvas Overlay and Interpolation:
 	
-	//Get kriging.js file only after initialization of the map object:
+	//Get kriging.js file only after initialization of the map object and injecting it into HTML file:
 	$http.get('app/components/kriging/kriging.js').then(function(data,status) {
 		// Adding the script tag to the head as suggested before
 		var script = document.createElement('script');
@@ -629,17 +598,21 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		document.getElementById('head').appendChild(script);
 
 	});
-
-	//necessary functions:
 	
+	//Initialize layer:
+	$rootScope.canvas_layer = new L.canvasOverlay();
+	
+	//necessary functions:
+		//function needed to draw canvas:
 		$scope.drawingOnCanvas = function(canvasOverlay, params) {
 			var draw_it = 0;//boolean if set to 1, the canvas is drawn
 
-			//data
+			//arrays to store data for interpolation: x-/y-coordinates and (temperature-)values:
 			var values = new Array();
 			var x = new Array();
 			var y = new Array();        
-
+			
+			//"Fill" arrays with latest values:
 			$rootScope.marker_array.forEach(function(marker_object){
 				var lat = marker_object._latlng.lat;
 				var lng = marker_object._latlng.lng;
@@ -648,7 +621,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 				y.push(lat);
 				values.push(value);
 			});
-			console.log("Anzahl Marker: ", values.length);
+			
 			//color range setup
 			var color_model = (2/3)/(Math.max.apply(null, values) - Math.min.apply(null, values)) * (-1);
 			var color_offset = Math.min.apply(null, values);
@@ -656,7 +629,10 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			//modelsetup of kriging
 			var model = "exponential";
 			var sigma2 = 0.1, alpha = 1;
-			var variogram = kriging.train(values, x, y, model, sigma2, alpha);
+			//Only create variogram if temperature values are stored inside values-array, otherwise an error message is thrown:
+			if (values.length > 0) {
+				var variogram = kriging.train(values, x, y, model, sigma2, alpha);
+			}
 
 			//min max values of the drawn rectangular
 			var x_min = Math.min.apply(null, x),
@@ -730,7 +706,8 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 
 				rec_incl_off_x = rec_x + x_offset;//add the offset of the canvas
 				rec_incl_off_y = rec_y + y_offset;//add the offset of the canvas
-
+				
+				//"Iterate" through canvas "grid":
 				for (var i = x_offset; i < rec_incl_off_x; i += 10){
 					for ( var j = y_offset; j < rec_incl_off_y; j += 10) {
 						//calculate the current position in lat / lng
@@ -741,14 +718,18 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 
 						//var value = predict_point(x_offset_deg + ( (i + 5) * x_factor ), y_offset_deg - ( (j + 5) * y_factor ), variogram);//->store the value at position in value
 						var value;
+						if (values.length > 0) {
+						//if "kriging" is set as interpolation method (default):
 						if ($rootScope.interpolation_method == "Kriging") {
 							value = predict_point(lng,lat,variogram);
-						} else {	//,x,y
+						} else {	//otherwise IDW is used:
 							var wj = 0;
 							var wis = [];
 							for (var k=0;k<values.length;k++)	{
-								var dx = x[k]-(i);
-								var dy = y[k]-(j);
+								/*var dx = x[k]-(i);
+								var dy = y[k]-(j);*/
+								var dx = x[k]-lng;
+								var dy = y[k]-lat;
 								var dk = Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
 								var p = 3;
 								var wj_inst = 1/(Math.pow(dk,p));
@@ -768,7 +749,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 								}
 							}
 						}
-						
+						}
 						var color;
 						// if (value < 0){
 							// color = value + color_offset;

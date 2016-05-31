@@ -29,11 +29,6 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 			// Save the temperature within the feature
 			$scope.feature.temp = $scope.temp;
 		
-			//console.log("Feature", $scope.feature);
-			//console.log("Feature", $scope.feature.id);
-			// Lets loop through all the elements that are drawn by now
-			// pick the correct marker and set the temperature
-		
 			$rootScope.editItems._layers[$scope.feature._leaflet_id].temp = $scope.temp;
 			
 			//Update value of marker icon:
@@ -47,8 +42,6 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 			if (typeof $scope.feature.id == "undefined") {
 				//Saving the measurement inside the database by passing the username, coordinates (lat,lon) and the temperature:
 				$http.get('partials/controllers/saveData.php?USER=' + $rootScope.username + '&LAT=' + latLon.lat + '&LON=' + latLon.lng + '&TEMP=' + $scope.temp + '&EXISTS=false&ID=-1').success(function(data,status) {
-					//console.log("Returned data");
-					//console.log(data);
 					
 					//Add id of marker entry to array:
 					$scope.feature.id = parseInt(data);
@@ -58,11 +51,16 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 					$rootScope.marker_array.push($scope.feature);
 					
 					//Automatically pan map to trigger canvas redraw:
-					leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+					//leafletData.getMap().then(function(map){map.panBy([1,1]);map.panBy([-1,-1]);return;});
+					$rootScope.canvas_layer.redraw();
 				});
 			//Existing markers that are already stored inside the database -> UPDATE
 			} else {
-				$http.get('partials/controllers/saveData.php?USER=' + $rootScope.username + '&LAT=' + latLon.lat + '&LON=' + latLon.lng + '&TEMP=' + $scope.temp + '&EXISTS=true&ID=' + $scope.feature.id ).success(function(data,status) {});
+				$http.get('partials/controllers/saveData.php?USER=' + $rootScope.username + '&LAT=' + latLon.lat + '&LON=' + latLon.lng + '&TEMP=' + $scope.temp + '&EXISTS=true&ID=' + $scope.feature.id ).success(function(data,status) {
+					//Automatically pan map to trigger canvas redraw after updating the existing value:
+					//leafletData.getMap().then(function(map){map.panBy([1,1]);map.panBy([-1,-1]);return;});
+					$rootScope.canvas_layer.redraw();
+				});
 			}
 		} else {
 			$rootScope.showAlert("Achtung!","Bitte geben Sie Werte zwischen -30°C und +45°C ein!");
@@ -70,6 +68,7 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 		}	
 	}
 	
+	//Function to delete a marker locally (from map) as well as remotely from database:
 	$scope.deleteMarker = function() {
 		$scope.editing = false;
 		//Temperature not yet saved to database:
@@ -97,7 +96,8 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 		}
 		
 		//Automatically pan map to trigger canvas redraw:
-		leafletData.getMap().then(function(map){map.panBy([10,10]);map.panBy([-10,-10]);});
+		//leafletData.getMap().then(function(map){map.panBy([1,1]);map.panBy([-1,-1]);return;});
+		$rootScope.canvas_layer.redraw();
 	}
 	
 	$rootScope.$on("startedit", function (event, data) {
@@ -105,7 +105,6 @@ app.controller('editCtrl', [ '$scope', '$rootScope', '$http', 'leafletData',  fu
 		$scope.editing = true;
 		$scope.temp = data.feature.temp;
 		$scope.feature = data.feature;
-		console.log(data.feature.user);
 		if (typeof data.feature.user != "undefined") {
 			//Disable editing or deletion feature for other groups if user is not a teacher:
 			if (data.feature.user != $rootScope.username && $rootScope.user_id == 0) {

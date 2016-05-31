@@ -4,7 +4,7 @@
  - added userDrawFunc that is called when Canvas need to be redrawn
  - added few useful params fro userDrawFunc callback
   - fixed resize map bug
-  - added save function: heatmap canvas can be saved as png file, needs Filesaver.js
+  - added exportPNG function: heatmap canvas can be exported as png file, needs Filesaver.js
   inspired & portions taken from  :   https://github.com/Leaflet/Leaflet.heat
   
   License: MIT
@@ -127,13 +127,18 @@ L.CanvasOverlay = L.Class.extend({
 
     },
 	
+	//method to export the canvas as PNG-file using FileSaver.js:
 	exportPNG: function(school,classname,interpolation_method,date,control) {
+		//Get day, month and year from passed date:
 		var year = date.getFullYear();
 		var month = date.getMonth() + 1;
 		var day = date.getDate();
+		//Convert canvas to "blob"object using toBlob-method:
 		this._canvas.toBlob(function(blob) {
+			//Export / Save this blob using FileSaver.js' saveAs function:
 			saveAs(blob, school+"_"+classname+"_"+interpolation_method+"_"+year.toString()+"_"+month.toString()+"_"+day.toString()+".png");
 		});
+		//Change state of passed saveButton-object, however, export so fast there is no change visible:
 		control.state("un_saved");
 	}
 });
