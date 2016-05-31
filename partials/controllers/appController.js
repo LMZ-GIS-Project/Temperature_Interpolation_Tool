@@ -252,8 +252,6 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 		});
 		$scope.locateButton.addTo(map);
 		
-		//console.log("Test control: ", $scope.locateButton);
-		
 		//Geolocation using leaflet map object:
 		map.on('locationfound', onLocationFound);	//if localization is successful event "locationfound" will be "fired" -> call function onLocationFound (see above)
 		map.on('locationerror', onLocationError);	//if localization is not successful event "locationerror" will be "fired" -> call function onLocationError (see above)
