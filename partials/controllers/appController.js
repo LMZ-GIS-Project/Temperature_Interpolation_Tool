@@ -621,8 +621,8 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 			});
 			
 			//color range setup
-			var color_model = (2/3)/(Math.max.apply(null, values) - Math.min.apply(null, values)) * (-1);
-			var color_offset = Math.min.apply(null, values);
+		    var color_model = (2/3)/(Math.max.apply(null, values) - Math.min.apply(null, values)) * (-1);
+		    var color_offset = Math.min.apply(null, values);
 
 			//modelsetup of kriging
 			var model = "exponential";
@@ -748,25 +748,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 							}
 						}
 						}
-						var color;
-						// if (value < 0){
-							// color = value + color_offset;
-							// color_model=Math.abs(color_model);
-						// }
-						// else {
-							// color = value - color_offset; 
-						// }
-						
-						
-						//test5 = (2/3) +(value-color_offset) * color_model
-						test5 = ((2/3)/(Math.max.apply(null, values) - Math.min.apply(null, values))) * (-1) * value;
-						if (test5 <0){
-							test5 = test5+ (2*test5);
-						}
-						ctx.fillStyle = hslToRgb(test5, 1, 0.5) ;//map the value to a color range
-						
-							
-						
+				    	ctx.fillStyle = hslToRgb((2/3) + (value - color_offset) * color_model, 1, 0.5);//map the value to a color range
 						ctx.fillRect(i,j,10,10);//draw a rectangular on canvas with height and width 1 pixel
 					}
 				}
