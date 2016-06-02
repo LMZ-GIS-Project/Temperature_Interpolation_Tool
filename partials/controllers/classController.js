@@ -25,7 +25,7 @@ app.controller('classCtrl', [ '$scope', '$rootScope', '$http',  function($scope,
 			//Display alert Window to notify that login was successful:
 			$rootScope.showAlert("Erfolg!","Der Login war erfolgreich!");
 		} else {
-			$rootScope.showAlert("Fehler!","Bitte Sie sowohl einen Schul- <br /> als auch einen Klassennamen ein!");
+			$rootScope.showAlert("Fehler!","Bitte Sie sowohl einen Schul- \n als auch einen Klassennamen ein!");
 			$scope.gettingclass = true;
 		}
 		

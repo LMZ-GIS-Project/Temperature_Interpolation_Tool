@@ -237,7 +237,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 						//Start geolocalization:
 						$scope.getLocation();
 					} else {
-						$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
+						$rootScope.showAlert("Fehler!","Bitte melde dich an, \n damit wir deine Position \n bestimmen können!");
 					}
 				}
 			}, {
@@ -268,7 +268,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 						$rootScope.$broadcast("startchoosing");
 					} else {
 						//Displaying alert in modal window by calling showAlert function, passed arguments: header as well as message
-						$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
+						$rootScope.showAlert("Fehler!","Bitte melde dich an, \n um eine Interpolationsmethode \n zu wählen!");
 					}
 				}
 			}]
@@ -288,7 +288,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 						$rootScope.canvas_layer.exportPNG($rootScope.school,$rootScope.classname,$rootScope.interpolation_method,date,control);
 					} else {
 						//Displaying alert in modal window by calling showAlert function, passed arguments: header as well as message
-						$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
+						$rootScope.showAlert("Fehler!","Bitte melde dich an, \n um die Karte zu speichern!");
 					}
 				}
 			}, {
@@ -330,7 +330,7 @@ app.controller('appController', [ '$scope', '$rootScope', '$http', 'leafletData'
 					$rootScope.$broadcast("startedit", {feature: layer});
 				} else {
 					//alert("Please login before adding measurements!")
-					$rootScope.showAlert("Fehler!","Bitte loggen Sie sich ein!");
+					$rootScope.showAlert("Fehler!","Bitte melde dich an, \n um einen Marker zu positionieren!");
 				}
 				
 				
