@@ -46,12 +46,14 @@ var HeatCanvas = function(canvas){
     this.onRenderingEnd = null;
     
     this.data = {};
+	
+	//additional array to store x- and y-coordinates of markers as pixel and (temperature-)values:
 	this.x = [];
 	this.y = [];
 	this.v = [];
+	
+	//Array that contains the interpolated values of canvas grid, values are stored in 2D, v_int[i][j] = v_int[x][y] in pixels:
 	this.v_int = [];
-	//this.interpolation_method = "IDW";
-	//this.variogram;
 };
 
 //Defintion of method resize:

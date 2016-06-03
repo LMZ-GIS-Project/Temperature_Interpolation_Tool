@@ -31,11 +31,17 @@ known problems:
 - canvas is redrawn completely with every pan-event, e.g. change to only move canvas instead of redraw
 - deletion of values in data array caused problems, workaround used: deleted values changed to 999.0 and caught with if-clause, should be changed!
 - canvas sizes does not 100% fit marker cluster once panned (right, bottom a little smaller), needs to be fixed
+- sometimes the displayed heatmap is "bugged", reload of app solves problem...
 
 additional information:
-this library and the respective functions call functions from heatcanvas.js, contains different important methods, e.g. push, interpolate, ...
-heatcanvas-worker.js was changed drastically, is called within heatcanvas.js, now there are no major calculations done anymore, 
+- this library and the respective functions call functions from heatcanvas.js, contains different important methods, e.g. push, interpolate, ...
+- heatcanvas-worker.js was changed drastically, is called within heatcanvas.js, now there are no major calculations done anymore, 
 only the calculation of the ID, everything else is done in both former libraries!
+- to guarantee that the canvas is located at the right position everytime the map is panned or zoomed the topleft coordinate of the map is calculated and compared to
+the previous location, thereby calculating the difference and afterwards adjusting the canvas location,
+this is important since the default algorithm uses the map bounds to draw the canvas (which is not the case here - marker bounds!)!
+The map bounds change with every interaction,
+HOWEVER, the bounds of the marker cluster not! they only change if markers are added or deleted! Therefore the location needs to be adjusted manually this way!
 
 additonal needed and open source libraries:
 -FileSaver.js
@@ -101,8 +107,12 @@ L.TileLayer.HeatCanvas = L.Class.extend({
 		console.log("Bounds init: ",bounds);
         var container = L.DomUtil.create('div', 'leaflet-heatmap-container');
         container.style.position = 'absolute';
+		
+		//Determine size and with of map object in pixel:
 		var map_width_px = this.map.getSize().x;
 		var map_height_px = this.map.getSize().y;
+		
+		//Determine size and with of map object in degree:
 		var map_width_deg = this.map.getBounds().getNorthEast().lng - this.map.getBounds().getSouthWest().lng;
 		var map_height_deg =  this.map.getBounds().getNorthEast().lat -  this.map.getBounds().getSouthWest().lat;
 		
@@ -113,9 +123,16 @@ L.TileLayer.HeatCanvas = L.Class.extend({
 		//Factor to adjust canvas size when user zooms:
 		var factor = this.getFactor();
 		this.factor = factor;
+		
+		/*Calculation of container size and width that is containing canvas,
+		ratio of width/height of map in pixel and degree is multiplied by marker width/size in degree -> scaling marker bounds to correct size,
+		result then multiplied with factor to adjust size to zoom level:*/
 		container.style.width = ((map_width_px/map_width_deg)*marker_width_deg)*factor+"px";
         container.style.height = ((map_height_px/map_height_deg)*marker_height_deg)*factor+"px";
 		
+		/*Creation of canvas and calculation of its size and width,
+		ratio of width/height of map in pixel and degree is multiplied by marker width/size in degree -> scaling marker bounds to correct size,
+		result then multiplied with factor to adjust size to zoom level:*/
         this.canv = document.createElement("canvas");
 		this.canv.width = (map_width_px/map_width_deg)*marker_width_deg;
         this.canv.height = (map_height_px/map_height_deg)*marker_height_deg;
@@ -123,7 +140,8 @@ L.TileLayer.HeatCanvas = L.Class.extend({
         this.canv.style.height = (this.canv.height*factor)+"px";
         this.canv.style.opacity = this._opacity;
         container.appendChild(this.canv);
-
+		
+		//initializationof HeatCanvas object needed to realize interpolation (->algorithms stored in heatcanvas.js):
         this.heatmap = new HeatCanvas(this.canv);
         this.heatmap.onRenderingStart = this._onRenderingStart;
         this.heatmap.onRenderingEnd = this._onRenderingEnd;
@@ -135,6 +153,7 @@ L.TileLayer.HeatCanvas = L.Class.extend({
 		var bounds = this.map.getBounds();
         var topLeft = this.map.latLngToLayerPoint(bounds.getNorthWest());
 		
+		//Get x- and y-coordinate of topleft location, is in resetCanvas and redraw needed to get correct location of canvas, important for drawing of canvas:
 		var topLeft_string = topLeft.toString().substring(6,topLeft.toString().length-1);
 		var topLeft_array = topLeft_string.split(',');
 		this.mapTopLeftLayerPoints_x_new = parseInt(topLeft_array[0]);
@@ -153,7 +172,7 @@ L.TileLayer.HeatCanvas = L.Class.extend({
         return this;
     },
 	
-	//"Reset"/Change canvas position: - not fixed that only position is changed once it is panned, instead of redrawing!
+	//"Reset"/Change canvas position: - not fixed that only position is changed once it is panned, instead of redrawing! Algorithm analogously to _initHeatCanvas!
     _resetCanvasPosition: function() {
 		
 		//Old:
@@ -217,16 +236,19 @@ L.TileLayer.HeatCanvas = L.Class.extend({
 		var factor = this.getFactor();
         if (this.data.length > 0) {
             for (var i=0, l=this.data.length; i<l; i++) {
-				//console.log(this.data[i].mid, ", ", this.data[i].v);
+				//Problem with deletion of values inside array "data", therefore deleted values set to 999, which are then ignored by if-clause:
 				if (this.data[i].v < parseFloat(999)){
+					//Calculation of coordinates as layerpoint:
 					var lonlat = new L.LatLng(this.data[i].lat, this.data[i].lon);
 					var localXY = this.map.latLngToLayerPoint(lonlat);
 					localXY = this.map.layerPointToContainerPoint(localXY);
-
+					
+					//Calculation of actual location inside canvas with the help of topLeft coordinates:
 					var localXY_string = localXY.toString().substring(6,localXY.toString().length-1);
 					var localXY_string_array = localXY_string.split(',');
 					var localXY_x = (parseFloat(localXY_string_array[0])-topLeft_coordinates[0])/factor;
 					var localXY_y = (parseFloat(localXY_string_array[1])-topLeft_coordinates[1])/factor;
+					//Pushing data to arrays for interpolation:
 					this.heatmap.push(
 							//Math.floor(localXY.x), 
 							//Math.floor(localXY.y),
